@@ -1,8 +1,23 @@
-import { Clock, MapPin } from 'lucide-react';
-import type { Match } from '@/data/sportsData';
+import { Clock, MapPin, Video } from 'lucide-react';
+import { MatchStatusBadge, MatchTypeBadge } from './MatchStatusBadge';
+import { cn } from '@/lib/utils';
 
 interface ScheduleCardProps {
-  match: Match;
+  match: {
+    id: string;
+    sport: string;
+    sportCategory: 'team' | 'individual' | 'minor';
+    matchName: string;
+    date: string;
+    time: string;
+    venue?: string | null;
+    teamA?: string | null;
+    teamB?: string | null;
+    matchType?: 'group' | 'eliminator' | 'semifinal' | 'final';
+    groupName?: string | null;
+    status?: 'upcoming' | 'running' | 'completed';
+    liveStreamUrl?: string | null;
+  };
 }
 
 export function ScheduleCard({ match }: ScheduleCardProps) {
@@ -18,28 +33,58 @@ export function ScheduleCard({ match }: ScheduleCardProps) {
     minor: 'bg-accent/10 text-accent',
   };
 
-  const isFinal = match.matchName.toLowerCase().includes('final');
+  const isFinal = match.matchType === 'final';
+  const isRunning = match.status === 'running';
 
   return (
     <div
-      className={`bg-card rounded-lg p-4 border-l-4 ${categoryStyles[match.sportCategory]} shadow-sm hover:shadow-md transition-shadow ${
-        isFinal ? 'ring-2 ring-accent ring-offset-2' : ''
-      }`}
+      className={cn(
+        'bg-card rounded-lg p-4 border-l-4 shadow-sm hover:shadow-md transition-all',
+        categoryStyles[match.sportCategory],
+        isFinal && 'ring-2 ring-accent ring-offset-2',
+        isRunning && 'ring-2 ring-destructive ring-offset-2 bg-destructive/5'
+      )}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${categoryBadgeStyles[match.sportCategory]}`}>
+          {/* Badges row */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className={cn('text-xs font-medium px-2 py-1 rounded-full', categoryBadgeStyles[match.sportCategory])}>
               {match.sport}
             </span>
-            {isFinal && (
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-accent text-accent-foreground">
-                🏆 FINAL
-              </span>
+            {match.matchType && (
+              <MatchTypeBadge matchType={match.matchType} groupName={match.groupName} />
+            )}
+            {match.status && (
+              <MatchStatusBadge status={match.status} />
             )}
           </div>
-          <h4 className="font-semibold text-foreground">{match.matchName}</h4>
+          
+          {/* Match name or Team vs Team */}
+          <h4 className="font-semibold text-foreground">
+            {match.teamA && match.teamB ? (
+              <span>
+                {match.teamA} <span className="text-muted-foreground">vs</span> {match.teamB}
+              </span>
+            ) : (
+              match.matchName
+            )}
+          </h4>
+          
+          {/* Additional match name if teams are specified */}
+          {match.teamA && match.teamB && match.matchName && (
+            <p className="text-sm text-muted-foreground mt-1">{match.matchName}</p>
+          )}
+
+          {/* Live stream indicator */}
+          {isRunning && match.liveStreamUrl && (
+            <div className="flex items-center gap-1 mt-2 text-destructive text-xs font-medium">
+              <Video className="w-3 h-3" />
+              Live Stream Available
+            </div>
+          )}
         </div>
+        
         <div className="text-right text-sm">
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Clock className="w-4 h-4" />

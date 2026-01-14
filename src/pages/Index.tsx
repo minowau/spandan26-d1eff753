@@ -1,50 +1,67 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Trophy, Users, Zap } from 'lucide-react';
-import { useSportsByCategory } from '@/hooks/useSportsData';
+import { useSportsByCategory, useSettings } from '@/hooks/useSportsData';
+import { CountdownTimer } from '@/components/CountdownTimer';
+import { RunningMatchesBanner } from '@/components/RunningMatchesBanner';
 
 const Index = () => {
   const { data: teamSports } = useSportsByCategory('team');
   const { data: individualSports } = useSportsByCategory('individual');
   const { data: minorSports } = useSportsByCategory('minor');
+  const { data: settings } = useSettings();
+
+  const festStartDate = settings?.fest_start_date 
+    ? new Date(settings.fest_start_date) 
+    : new Date('2026-01-22T09:00:00');
 
   return (
     <div className="min-h-screen">
+      {/* Running Matches Banner */}
+      <RunningMatchesBanner />
+
       {/* Hero Section */}
       <section className="relative bg-primary overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/20 opacity-90" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         
         <div className="relative container mx-auto px-4 py-20 md:py-32">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent-foreground text-sm font-medium mb-6">
-              <Calendar className="w-4 h-4" />
-              January 22-25, 2025
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent-foreground text-sm font-medium mb-6">
+                <Calendar className="w-4 h-4" />
+                January 22-25, 2026
+              </div>
+              
+              <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-primary-foreground leading-none mb-6">
+                SPANDAN<br />
+                <span className="text-accent">'26</span>
+              </h1>
+              
+              <p className="text-lg md:text-xl text-primary-foreground/80 max-w-xl mb-8">
+                Four days of intense competition, team spirit, and unforgettable moments. 
+                Watch live streams, track schedules, and follow your favorite teams.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  to="/schedule"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:opacity-90 transition-opacity"
+                >
+                  View Schedule
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+                <Link
+                  to="/team-sports"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary-foreground/10 text-primary-foreground font-semibold hover:bg-primary-foreground/20 transition-colors border border-primary-foreground/20"
+                >
+                  Explore Sports
+                </Link>
+              </div>
             </div>
-            
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-primary-foreground leading-none mb-6">
-              INTRA-COLLEGE<br />
-              <span className="text-accent">SPORTS FEST</span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-xl mb-8">
-              Four days of intense competition, team spirit, and unforgettable moments. 
-              Watch live streams, track schedules, and follow your favorite teams.
-            </p>
-            
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/schedule"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:opacity-90 transition-opacity"
-              >
-                View Schedule
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/team-sports"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary-foreground/10 text-primary-foreground font-semibold hover:bg-primary-foreground/20 transition-colors border border-primary-foreground/20"
-              >
-                Explore Sports
-              </Link>
+
+            {/* Countdown Timer */}
+            <div className="flex justify-center lg:justify-end">
+              <CountdownTimer targetDate={festStartDate} />
             </div>
           </div>
         </div>
@@ -85,7 +102,6 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Team Sports Card */}
             <Link to="/team-sports" className="group">
               <div className="sport-card sport-card-team h-full">
                 <div className="flex flex-col items-center text-center py-6">
@@ -100,15 +116,11 @@ const Index = () => {
                     {teamSports?.slice(0, 3).map((sport) => (
                       <span key={sport.id} className="text-2xl">{sport.icon}</span>
                     ))}
-                    {(teamSports?.length || 0) > 3 && (
-                      <span className="text-sm text-muted-foreground self-center">+{(teamSports?.length || 0) - 3}</span>
-                    )}
                   </div>
                 </div>
               </div>
             </Link>
 
-            {/* Individual Sports Card */}
             <Link to="/individual-sports" className="group">
               <div className="sport-card sport-card-individual h-full">
                 <div className="flex flex-col items-center text-center py-6">
@@ -128,7 +140,6 @@ const Index = () => {
               </div>
             </Link>
 
-            {/* Minor Sports Card */}
             <Link to="/minor-sports" className="group">
               <div className="sport-card sport-card-minor h-full">
                 <div className="flex flex-col items-center text-center py-6">

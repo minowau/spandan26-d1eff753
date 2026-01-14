@@ -1,7 +1,9 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar } from 'lucide-react';
-import { useSport, useGroups, useTeams, useMatchesBySport } from '@/hooks/useSportsData';
+import { ArrowLeft, Calendar, Video } from 'lucide-react';
+import { useSport, useGroups, useTeams, useMatchesBySport, type Sport } from '@/hooks/useSportsData';
 import { LiveStream } from '@/components/LiveStream';
+import { LiveChat } from '@/components/LiveChat';
+import { MatchStatusBadge, MatchTypeBadge } from '@/components/MatchStatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SportDetail() {
@@ -52,6 +54,10 @@ export default function SportDetail() {
     minor: 'Minor Sports',
   }[sport.category];
 
+  // Find currently running match
+  const runningMatch = matches?.find(m => m.status === 'running');
+  const currentStreamUrl = runningMatch?.live_stream_url || sport.live_stream_url;
+
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
@@ -73,14 +79,25 @@ export default function SportDetail() {
               <p className="text-muted-foreground">{sport.description}</p>
             </div>
           </div>
+          {runningMatch && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive text-destructive-foreground font-medium animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-destructive-foreground" />
+              LIVE: {runningMatch.match_name}
+            </div>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Live Stream */}
-            {sport.live_stream_url && (
-              <LiveStream url={sport.live_stream_url} title={sport.name} />
+            {currentStreamUrl && (
+              <LiveStream url={currentStreamUrl} title={runningMatch?.match_name || sport.name} />
+            )}
+
+            {/* Live Chat (Team Sports Only) */}
+            {sport.category === 'team' && (
+              <LiveChat sportId={sport.id} sportName={sport.name} />
             )}
 
             {/* Points Table (Team Sports Only) */}
@@ -91,7 +108,7 @@ export default function SportDetail() {
                 </h2>
                 <div className="space-y-6">
                   {groups.map((group) => (
-                    <GroupPointsTable key={group.id} groupId={group.id} groupName={group.name} />
+                    <GroupPointsTable key={group.id} groupId={group.id} groupName={group.name} sport={sport} />
                   ))}
                 </div>
               </div>
@@ -124,7 +141,7 @@ export default function SportDetail() {
   );
 }
 
-function GroupPointsTable({ groupId, groupName }: { groupId: string; groupName: string }) {
+function GroupPointsTable({ groupId, groupName, sport }: { groupId: string; groupName: string; sport: Sport }) {
   const { data: teams, isLoading } = useTeams(groupId);
 
   if (isLoading) {
@@ -147,8 +164,12 @@ function GroupPointsTable({ groupId, groupName }: { groupId: string; groupName: 
               <th className="!bg-secondary !text-secondary-foreground">Team</th>
               <th className="!bg-secondary !text-secondary-foreground text-center">P</th>
               <th className="!bg-secondary !text-secondary-foreground text-center">W</th>
+              <th className="!bg-secondary !text-secondary-foreground text-center">D</th>
               <th className="!bg-secondary !text-secondary-foreground text-center">L</th>
               <th className="!bg-secondary !text-secondary-foreground text-center">Pts</th>
+              {sport.uses_nrr && <th className="!bg-secondary !text-secondary-foreground text-center">NRR</th>}
+              {sport.uses_gd && <th className="!bg-secondary !text-secondary-foreground text-center">GD</th>}
+              {sport.uses_pd && <th className="!bg-secondary !text-secondary-foreground text-center">PD</th>}
             </tr>
           </thead>
           <tbody>
@@ -169,8 +190,12 @@ function GroupPointsTable({ groupId, groupName }: { groupId: string; groupName: 
                 </td>
                 <td className="text-center">{team.matches_played}</td>
                 <td className="text-center text-sport-green font-semibold">{team.wins}</td>
+                <td className="text-center text-muted-foreground">{team.draws}</td>
                 <td className="text-center text-destructive font-semibold">{team.losses}</td>
                 <td className="text-center font-bold text-primary">{team.points}</td>
+                {sport.uses_nrr && <td className="text-center text-sm">{team.net_run_rate?.toFixed(3)}</td>}
+                {sport.uses_gd && <td className="text-center text-sm">{team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}</td>}
+                {sport.uses_pd && <td className="text-center text-sm">{team.point_difference > 0 ? `+${team.point_difference}` : team.point_difference}</td>}
               </tr>
             ))}
           </tbody>
@@ -181,24 +206,33 @@ function GroupPointsTable({ groupId, groupName }: { groupId: string; groupName: 
 }
 
 function ScheduleItem({ match }: { match: any }) {
-  const isFinal = match.match_name.toLowerCase().includes('final');
+  const isRunning = match.status === 'running';
 
   return (
-    <div className={`p-3 rounded-lg bg-secondary/50 ${isFinal ? 'ring-2 ring-accent' : ''}`}>
+    <div className={`p-3 rounded-lg ${isRunning ? 'bg-destructive/10 ring-1 ring-destructive' : 'bg-secondary/50'}`}>
+      <div className="flex items-center gap-2 mb-1">
+        <MatchTypeBadge matchType={match.match_type || 'group'} groupName={match.group_name} />
+        <MatchStatusBadge status={match.status || 'upcoming'} />
+      </div>
       <div className="flex items-center justify-between gap-2">
         <div>
-          {isFinal && (
-            <span className="text-xs font-bold text-accent">🏆 FINAL</span>
-          )}
-          <p className="font-medium text-sm">{match.match_name}</p>
+          <p className="font-medium text-sm">
+            {match.team_a && match.team_b ? `${match.team_a} vs ${match.team_b}` : match.match_name}
+          </p>
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          <p>Jan {match.match_date}</p>
+          <p>Jan {match.match_date}, 2026</p>
           <p>{match.match_time}</p>
         </div>
       </div>
       {match.venue && (
         <p className="text-xs text-muted-foreground mt-1">📍 {match.venue}</p>
+      )}
+      {isRunning && match.live_stream_url && (
+        <div className="flex items-center gap-1 mt-2 text-destructive text-xs font-medium">
+          <Video className="w-3 h-3" />
+          Watch Live
+        </div>
       )}
     </div>
   );

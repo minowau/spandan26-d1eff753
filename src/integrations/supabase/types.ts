@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          sport_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          sport_id: string
+          username?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          sport_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_sport_id_fkey"
+            columns: ["sport_id"]
+            isOneToOne: false
+            referencedRelation: "sports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           created_at: string | null
@@ -46,29 +78,47 @@ export type Database = {
       matches: {
         Row: {
           created_at: string | null
+          group_name: string | null
           id: string
+          live_stream_url: string | null
           match_date: string
           match_name: string
           match_time: string
+          match_type: string | null
           sport_id: string
+          status: string | null
+          team_a: string | null
+          team_b: string | null
           venue: string | null
         }
         Insert: {
           created_at?: string | null
+          group_name?: string | null
           id?: string
+          live_stream_url?: string | null
           match_date: string
           match_name: string
           match_time: string
+          match_type?: string | null
           sport_id: string
+          status?: string | null
+          team_a?: string | null
+          team_b?: string | null
           venue?: string | null
         }
         Update: {
           created_at?: string | null
+          group_name?: string | null
           id?: string
+          live_stream_url?: string | null
           match_date?: string
           match_name?: string
           match_time?: string
+          match_type?: string | null
           sport_id?: string
+          status?: string | null
+          team_a?: string | null
+          team_b?: string | null
           venue?: string | null
         }
         Relationships: [
@@ -81,64 +131,115 @@ export type Database = {
           },
         ]
       }
+      settings: {
+        Row: {
+          created_at: string | null
+          fest_start_date: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fest_start_date?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fest_start_date?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sports: {
         Row: {
           category: string
           created_at: string | null
           description: string | null
+          draw_points: number | null
           icon: string
           id: string
           live_stream_url: string | null
+          loss_points: number | null
           name: string
+          uses_gd: boolean | null
+          uses_nrr: boolean | null
+          uses_pd: boolean | null
+          win_points: number | null
         }
         Insert: {
           category: string
           created_at?: string | null
           description?: string | null
+          draw_points?: number | null
           icon?: string
           id: string
           live_stream_url?: string | null
+          loss_points?: number | null
           name: string
+          uses_gd?: boolean | null
+          uses_nrr?: boolean | null
+          uses_pd?: boolean | null
+          win_points?: number | null
         }
         Update: {
           category?: string
           created_at?: string | null
           description?: string | null
+          draw_points?: number | null
           icon?: string
           id?: string
           live_stream_url?: string | null
+          loss_points?: number | null
           name?: string
+          uses_gd?: boolean | null
+          uses_nrr?: boolean | null
+          uses_pd?: boolean | null
+          win_points?: number | null
         }
         Relationships: []
       }
       teams: {
         Row: {
           created_at: string | null
+          draws: number | null
+          goal_difference: number | null
           group_id: string
           id: string
           losses: number | null
           matches_played: number | null
           name: string
+          net_run_rate: number | null
+          point_difference: number | null
           points: number | null
           wins: number | null
         }
         Insert: {
           created_at?: string | null
+          draws?: number | null
+          goal_difference?: number | null
           group_id: string
           id?: string
           losses?: number | null
           matches_played?: number | null
           name: string
+          net_run_rate?: number | null
+          point_difference?: number | null
           points?: number | null
           wins?: number | null
         }
         Update: {
           created_at?: string | null
+          draws?: number | null
+          goal_difference?: number | null
           group_id?: string
           id?: string
           losses?: number | null
           matches_played?: number | null
           name?: string
+          net_run_rate?: number | null
+          point_difference?: number | null
           points?: number | null
           wins?: number | null
         }

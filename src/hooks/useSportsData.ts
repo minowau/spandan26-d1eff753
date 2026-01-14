@@ -8,6 +8,12 @@ export interface Sport {
   icon: string;
   description: string | null;
   live_stream_url: string | null;
+  win_points: number;
+  draw_points: number;
+  loss_points: number;
+  uses_nrr: boolean;
+  uses_gd: boolean;
+  uses_pd: boolean;
 }
 
 export interface Group {
@@ -23,7 +29,11 @@ export interface Team {
   matches_played: number;
   wins: number;
   losses: number;
+  draws: number;
   points: number;
+  net_run_rate: number;
+  goal_difference: number;
+  point_difference: number;
 }
 
 export interface Match {
@@ -33,6 +43,50 @@ export interface Match {
   match_date: string;
   match_time: string;
   venue: string | null;
+  team_a: string | null;
+  team_b: string | null;
+  match_type: 'group' | 'eliminator' | 'semifinal' | 'final';
+  group_name: string | null;
+  status: 'upcoming' | 'running' | 'completed';
+  live_stream_url: string | null;
+}
+
+export interface Settings {
+  id: string;
+  fest_start_date: string;
+}
+
+// Fetch settings
+export function useSettings() {
+  return useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 'global')
+        .maybeSingle();
+      if (error) throw error;
+      return data as Settings | null;
+    },
+  });
+}
+
+// Update settings
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (settings: Partial<Settings>) => {
+      const { error } = await supabase
+        .from('settings')
+        .update(settings)
+        .eq('id', 'global');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+  });
 }
 
 // Fetch all sports
@@ -115,7 +169,7 @@ export function useAllGroups() {
   });
 }
 
-// Fetch teams for a group
+// Fetch teams for a group with auto-ranking
 export function useTeams(groupId: string) {
   return useQuery({
     queryKey: ['teams', groupId],
@@ -123,10 +177,26 @@ export function useTeams(groupId: string) {
       const { data, error } = await supabase
         .from('teams')
         .select('*')
-        .eq('group_id', groupId)
-        .order('points', { ascending: false });
+        .eq('group_id', groupId);
       if (error) throw error;
-      return data as Team[];
+      
+      // Sort by points first, then by tie-breaker (NRR/GD/PD)
+      const sorted = (data as Team[]).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        // Tie-breakers
+        if (a.net_run_rate !== 0 || b.net_run_rate !== 0) {
+          return b.net_run_rate - a.net_run_rate;
+        }
+        if (a.goal_difference !== 0 || b.goal_difference !== 0) {
+          return b.goal_difference - a.goal_difference;
+        }
+        if (a.point_difference !== 0 || b.point_difference !== 0) {
+          return b.point_difference - a.point_difference;
+        }
+        return 0;
+      });
+      
+      return sorted;
     },
     enabled: !!groupId,
   });
@@ -147,7 +217,7 @@ export function useAllTeams() {
   });
 }
 
-// Fetch matches by date
+// Fetch matches by date - sorted by time
 export function useMatchesByDate(date: string) {
   return useQuery({
     queryKey: ['matches', 'date', date],
@@ -156,14 +226,14 @@ export function useMatchesByDate(date: string) {
         .from('matches')
         .select('*, sports(name, category)')
         .eq('match_date', date)
-        .order('match_time');
+        .order('match_time', { ascending: true });
       if (error) throw error;
       return data;
     },
   });
 }
 
-// Fetch matches by sport
+// Fetch matches by sport - sorted by date and time
 export function useMatchesBySport(sportId: string) {
   return useQuery({
     queryKey: ['matches', 'sport', sportId],
@@ -172,8 +242,8 @@ export function useMatchesBySport(sportId: string) {
         .from('matches')
         .select('*')
         .eq('sport_id', sportId)
-        .order('match_date')
-        .order('match_time');
+        .order('match_date', { ascending: true })
+        .order('match_time', { ascending: true });
       if (error) throw error;
       return data as Match[];
     },
@@ -181,7 +251,7 @@ export function useMatchesBySport(sportId: string) {
   });
 }
 
-// Fetch all matches
+// Fetch all matches - sorted by date and time
 export function useAllMatches() {
   return useQuery({
     queryKey: ['matches'],
@@ -189,11 +259,28 @@ export function useAllMatches() {
       const { data, error } = await supabase
         .from('matches')
         .select('*, sports(name, category)')
-        .order('match_date')
-        .order('match_time');
+        .order('match_date', { ascending: true })
+        .order('match_time', { ascending: true });
       if (error) throw error;
       return data;
     },
+  });
+}
+
+// Fetch currently running matches
+export function useRunningMatches() {
+  return useQuery({
+    queryKey: ['matches', 'running'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*, sports(name, category, icon)')
+        .eq('status', 'running')
+        .order('match_time', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 }
 

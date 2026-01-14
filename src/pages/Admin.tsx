@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Plus, Save, Video, Calendar, Trophy, Users } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useSports,
   useAllGroups,
   useAllTeams,
   useAllMatches,
+  useSettings,
   useUpdateSport,
   useUpdateTeam,
   useCreateTeam,
@@ -21,6 +23,8 @@ import {
   useCreateMatch,
   useUpdateMatch,
   useDeleteMatch,
+  useUpdateSettings,
+  type Sport,
 } from '@/hooks/useSportsData';
 
 export default function Admin() {
@@ -30,23 +34,27 @@ export default function Admin() {
         <div className="mb-8">
           <h1 className="section-title">ADMIN PANEL</h1>
           <p className="text-muted-foreground mt-2">
-            Manage schedules, points tables, and live stream links
+            Manage schedules, points tables, live streams, and settings for Spandan'26
           </p>
         </div>
 
-        <Tabs defaultValue="streams" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="streams" className="gap-2">
-              <Video className="w-4 h-4" />
-              <span className="hidden sm:inline">Live Streams</span>
+        <Tabs defaultValue="settings" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
             <TabsTrigger value="schedule" className="gap-2">
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Schedule</span>
+              <span className="hidden sm:inline">Matches</span>
+            </TabsTrigger>
+            <TabsTrigger value="streams" className="gap-2">
+              <Video className="w-4 h-4" />
+              <span className="hidden sm:inline">Streams</span>
             </TabsTrigger>
             <TabsTrigger value="points" className="gap-2">
               <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Points Table</span>
+              <span className="hidden sm:inline">Points</span>
             </TabsTrigger>
             <TabsTrigger value="groups" className="gap-2">
               <Users className="w-4 h-4" />
@@ -54,11 +62,14 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="streams">
-            <LiveStreamsTab />
+          <TabsContent value="settings">
+            <SettingsTab />
           </TabsContent>
           <TabsContent value="schedule">
             <ScheduleTab />
+          </TabsContent>
+          <TabsContent value="streams">
+            <LiveStreamsTab />
           </TabsContent>
           <TabsContent value="points">
             <PointsTableTab />
@@ -68,6 +79,146 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const { data: settings, isLoading } = useSettings();
+  const updateSettings = useUpdateSettings();
+  const { data: sports } = useSports();
+  const updateSport = useUpdateSport();
+
+  const [festDate, setFestDate] = useState('');
+
+  const handleUpdateFestDate = () => {
+    if (!festDate) return;
+    updateSettings.mutate(
+      { fest_start_date: new Date(festDate).toISOString() },
+      {
+        onSuccess: () => toast.success('Fest start date updated!'),
+        onError: () => toast.error('Failed to update'),
+      }
+    );
+  };
+
+  const handleUpdateScoringRules = (sport: Sport, field: string, value: number | boolean) => {
+    updateSport.mutate(
+      { id: sport.id, [field]: value },
+      {
+        onSuccess: () => toast.success('Scoring rules updated!'),
+        onError: () => toast.error('Failed to update'),
+      }
+    );
+  };
+
+  if (isLoading) return <div className="text-center py-8">Loading...</div>;
+
+  const teamSports = sports?.filter((s) => s.category === 'team') || [];
+
+  return (
+    <div className="space-y-6">
+      {/* Countdown Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Countdown Timer Settings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-4">
+            <div className="flex-1 max-w-sm">
+              <Label className="mb-2 block">Fest Start Date & Time</Label>
+              <Input
+                type="datetime-local"
+                defaultValue={settings?.fest_start_date ? new Date(settings.fest_start_date).toISOString().slice(0, 16) : '2026-01-22T09:00'}
+                onChange={(e) => setFestDate(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleUpdateFestDate} disabled={updateSettings.isPending}>
+              Save Date
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Current: {settings?.fest_start_date ? new Date(settings.fest_start_date).toLocaleString() : 'Not set'}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Scoring Rules per Sport */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Scoring Rules per Sport</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {teamSports.map((sport) => (
+              <div key={sport.id} className="p-4 bg-secondary/50 rounded-lg">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">{sport.icon}</span>
+                  <h4 className="font-semibold">{sport.name}</h4>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-xs">Win Points</Label>
+                    <Input
+                      type="number"
+                      className="mt-1"
+                      defaultValue={sport.win_points || 2}
+                      onBlur={(e) => handleUpdateScoringRules(sport, 'win_points', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Draw Points</Label>
+                    <Input
+                      type="number"
+                      className="mt-1"
+                      defaultValue={sport.draw_points || 1}
+                      onBlur={(e) => handleUpdateScoringRules(sport, 'draw_points', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Loss Points</Label>
+                    <Input
+                      type="number"
+                      className="mt-1"
+                      defaultValue={sport.loss_points || 0}
+                      onBlur={(e) => handleUpdateScoringRules(sport, 'loss_points', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Tie-breaker</Label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <label className="flex items-center gap-1 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={sport.uses_nrr}
+                          onChange={(e) => handleUpdateScoringRules(sport, 'uses_nrr', e.target.checked)}
+                        />
+                        NRR
+                      </label>
+                      <label className="flex items-center gap-1 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={sport.uses_gd}
+                          onChange={(e) => handleUpdateScoringRules(sport, 'uses_gd', e.target.checked)}
+                        />
+                        GD
+                      </label>
+                      <label className="flex items-center gap-1 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={sport.uses_pd}
+                          onChange={(e) => handleUpdateScoringRules(sport, 'uses_pd', e.target.checked)}
+                        />
+                        PD
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -95,7 +246,7 @@ function LiveStreamsTab() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Team Sports - Live Stream URLs</CardTitle>
+          <CardTitle>Team Sports - Default Live Stream URLs</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {teamSports.map((sport) => (
@@ -142,6 +293,7 @@ function LiveStreamsTab() {
 function ScheduleTab() {
   const { data: matches, isLoading: matchesLoading } = useAllMatches();
   const { data: sports } = useSports();
+  const { data: groups } = useAllGroups();
   const createMatch = useCreateMatch();
   const updateMatch = useUpdateMatch();
   const deleteMatch = useDeleteMatch();
@@ -152,20 +304,66 @@ function ScheduleTab() {
     match_date: '22',
     match_time: '',
     venue: '',
+    team_a: '',
+    team_b: '',
+    match_type: 'group' as const,
+    group_name: '',
+    status: 'upcoming' as const,
+    live_stream_url: '',
   });
 
   const handleAddMatch = () => {
-    if (!newMatch.sport_id || !newMatch.match_name || !newMatch.match_time) {
-      toast.error('Please fill sport, match name, and time');
+    if (!newMatch.sport_id || !newMatch.match_time) {
+      toast.error('Please fill sport and time');
       return;
     }
-    createMatch.mutate(newMatch, {
+    
+    const matchName = newMatch.team_a && newMatch.team_b 
+      ? `${newMatch.team_a} vs ${newMatch.team_b}` 
+      : newMatch.match_name;
+    
+    if (!matchName) {
+      toast.error('Please enter match name or both teams');
+      return;
+    }
+
+    createMatch.mutate({
+      ...newMatch,
+      match_name: matchName,
+      team_a: newMatch.team_a || null,
+      team_b: newMatch.team_b || null,
+      group_name: newMatch.group_name || null,
+      venue: newMatch.venue || null,
+      live_stream_url: newMatch.live_stream_url || null,
+    }, {
       onSuccess: () => {
         toast.success('Match added!');
-        setNewMatch({ sport_id: '', match_name: '', match_date: '22', match_time: '', venue: '' });
+        setNewMatch({
+          sport_id: '',
+          match_name: '',
+          match_date: '22',
+          match_time: '',
+          venue: '',
+          team_a: '',
+          team_b: '',
+          match_type: 'group',
+          group_name: '',
+          status: 'upcoming',
+          live_stream_url: '',
+        });
       },
       onError: () => toast.error('Failed to add match'),
     });
+  };
+
+  const handleToggleStatus = (match: any, newStatus: 'upcoming' | 'running' | 'completed') => {
+    updateMatch.mutate(
+      { id: match.id, status: newStatus },
+      {
+        onSuccess: () => toast.success('Match status updated!'),
+        onError: () => toast.error('Failed to update'),
+      }
+    );
   };
 
   const handleDeleteMatch = (id: string) => {
@@ -176,6 +374,9 @@ function ScheduleTab() {
   };
 
   if (matchesLoading) return <div className="text-center py-8">Loading...</div>;
+
+  const selectedSport = sports?.find(s => s.id === newMatch.sport_id);
+  const sportGroups = groups?.filter(g => g.sport_id === newMatch.sport_id) || [];
 
   return (
     <div className="space-y-6">
@@ -188,8 +389,8 @@ function ScheduleTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            <Select value={newMatch.sport_id} onValueChange={(v) => setNewMatch({ ...newMatch, sport_id: v })}>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <Select value={newMatch.sport_id} onValueChange={(v) => setNewMatch({ ...newMatch, sport_id: v, group_name: '' })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Sport" />
               </SelectTrigger>
@@ -201,35 +402,84 @@ function ScheduleTab() {
                 ))}
               </SelectContent>
             </Select>
-            <Input
-              placeholder="Match Name"
-              value={newMatch.match_name}
-              onChange={(e) => setNewMatch({ ...newMatch, match_name: e.target.value })}
-            />
+            
+            <Select value={newMatch.match_type} onValueChange={(v: any) => setNewMatch({ ...newMatch, match_type: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Match Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="group">Group Stage</SelectItem>
+                <SelectItem value="eliminator">Eliminator</SelectItem>
+                <SelectItem value="semifinal">Semi Final</SelectItem>
+                <SelectItem value="final">Final</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {newMatch.match_type === 'group' && sportGroups.length > 0 && (
+              <Select value={newMatch.group_name} onValueChange={(v) => setNewMatch({ ...newMatch, group_name: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sportGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.name}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Select value={newMatch.match_date} onValueChange={(v) => setNewMatch({ ...newMatch, match_date: v })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="22">Jan 22</SelectItem>
-                <SelectItem value="23">Jan 23</SelectItem>
-                <SelectItem value="24">Jan 24</SelectItem>
-                <SelectItem value="25">Jan 25</SelectItem>
+                <SelectItem value="22">Jan 22, 2026</SelectItem>
+                <SelectItem value="23">Jan 23, 2026</SelectItem>
+                <SelectItem value="24">Jan 24, 2026</SelectItem>
+                <SelectItem value="25">Jan 25, 2026</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <Input
+              placeholder="Team A"
+              value={newMatch.team_a}
+              onChange={(e) => setNewMatch({ ...newMatch, team_a: e.target.value })}
+            />
+            <Input
+              placeholder="Team B"
+              value={newMatch.team_b}
+              onChange={(e) => setNewMatch({ ...newMatch, team_b: e.target.value })}
+            />
+            <Input
+              placeholder="Or Match Name"
+              value={newMatch.match_name}
+              onChange={(e) => setNewMatch({ ...newMatch, match_name: e.target.value })}
+            />
             <Input
               placeholder="Time (e.g., 9:00 AM)"
               value={newMatch.match_time}
               onChange={(e) => setNewMatch({ ...newMatch, match_time: e.target.value })}
             />
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4">
             <Input
               placeholder="Venue (optional)"
               value={newMatch.venue}
               onChange={(e) => setNewMatch({ ...newMatch, venue: e.target.value })}
             />
+            <Input
+              placeholder="Live Stream URL (optional)"
+              value={newMatch.live_stream_url}
+              onChange={(e) => setNewMatch({ ...newMatch, live_stream_url: e.target.value })}
+            />
             <Button onClick={handleAddMatch} disabled={createMatch.isPending}>
               <Plus className="w-4 h-4 mr-2" />
-              Add
+              Add Match
             </Button>
           </div>
         </CardContent>
@@ -243,14 +493,55 @@ function ScheduleTab() {
         <CardContent>
           <div className="space-y-2">
             {matches?.map((match: any) => (
-              <div key={match.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+              <div 
+                key={match.id} 
+                className={`flex items-center gap-3 p-3 rounded-lg ${
+                  match.status === 'running' ? 'bg-destructive/10 ring-1 ring-destructive' : 'bg-secondary/50'
+                }`}
+              >
                 <span className="text-xs font-medium px-2 py-1 rounded bg-primary/10 text-primary">
                   {match.sports?.name}
                 </span>
+                <span className={`text-xs font-medium px-2 py-1 rounded ${
+                  match.match_type === 'final' ? 'bg-accent text-accent-foreground' : 
+                  match.match_type === 'semifinal' ? 'bg-accent/20 text-accent' : 
+                  'bg-secondary text-secondary-foreground'
+                }`}>
+                  {match.match_type === 'group' ? match.group_name || 'Group' : match.match_type}
+                </span>
                 <span className="font-medium flex-1">{match.match_name}</span>
-                <span className="text-sm text-muted-foreground">Jan {match.match_date}</span>
+                <span className="text-sm text-muted-foreground">Jan {match.match_date}, 2026</span>
                 <span className="text-sm text-muted-foreground">{match.match_time}</span>
-                <span className="text-sm text-muted-foreground">{match.venue || '-'}</span>
+                
+                {/* Status controls */}
+                <div className="flex gap-1">
+                  <Button
+                    variant={match.status === 'upcoming' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="text-xs px-2"
+                    onClick={() => handleToggleStatus(match, 'upcoming')}
+                  >
+                    Upcoming
+                  </Button>
+                  <Button
+                    variant={match.status === 'running' ? 'destructive' : 'ghost'}
+                    size="sm"
+                    className="text-xs px-2"
+                    onClick={() => handleToggleStatus(match, 'running')}
+                  >
+                    <Play className="w-3 h-3 mr-1" />
+                    Live
+                  </Button>
+                  <Button
+                    variant={match.status === 'completed' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="text-xs px-2"
+                    onClick={() => handleToggleStatus(match, 'completed')}
+                  >
+                    Done
+                  </Button>
+                </div>
+                
                 <Button
                   variant="ghost"
                   size="icon"
@@ -294,7 +585,17 @@ function PointsTableTab() {
       return;
     }
     createTeam.mutate(
-      { ...newTeam, matches_played: 0, wins: 0, losses: 0, points: 0 },
+      { 
+        ...newTeam, 
+        matches_played: 0, 
+        wins: 0, 
+        losses: 0, 
+        draws: 0,
+        points: 0,
+        net_run_rate: 0,
+        goal_difference: 0,
+        point_difference: 0,
+      },
       {
         onSuccess: () => {
           toast.success('Team added!');
@@ -384,10 +685,14 @@ function PointsTableTab() {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2">Team</th>
-                        <th className="text-center py-2 w-20">Played</th>
-                        <th className="text-center py-2 w-20">Wins</th>
-                        <th className="text-center py-2 w-20">Losses</th>
-                        <th className="text-center py-2 w-20">Points</th>
+                        <th className="text-center py-2 w-16">P</th>
+                        <th className="text-center py-2 w-16">W</th>
+                        <th className="text-center py-2 w-16">D</th>
+                        <th className="text-center py-2 w-16">L</th>
+                        <th className="text-center py-2 w-16">Pts</th>
+                        {sport?.uses_nrr && <th className="text-center py-2 w-20">NRR</th>}
+                        {sport?.uses_gd && <th className="text-center py-2 w-20">GD</th>}
+                        {sport?.uses_pd && <th className="text-center py-2 w-20">PD</th>}
                         <th className="w-10"></th>
                       </tr>
                     </thead>
@@ -398,7 +703,7 @@ function PointsTableTab() {
                           <td className="py-2">
                             <Input
                               type="number"
-                              className="w-16 text-center mx-auto"
+                              className="w-14 text-center mx-auto"
                               defaultValue={team.matches_played}
                               onBlur={(e) => handleUpdateTeam(team, 'matches_played', parseInt(e.target.value) || 0)}
                             />
@@ -406,7 +711,7 @@ function PointsTableTab() {
                           <td className="py-2">
                             <Input
                               type="number"
-                              className="w-16 text-center mx-auto"
+                              className="w-14 text-center mx-auto"
                               defaultValue={team.wins}
                               onBlur={(e) => handleUpdateTeam(team, 'wins', parseInt(e.target.value) || 0)}
                             />
@@ -414,7 +719,15 @@ function PointsTableTab() {
                           <td className="py-2">
                             <Input
                               type="number"
-                              className="w-16 text-center mx-auto"
+                              className="w-14 text-center mx-auto"
+                              defaultValue={team.draws}
+                              onBlur={(e) => handleUpdateTeam(team, 'draws', parseInt(e.target.value) || 0)}
+                            />
+                          </td>
+                          <td className="py-2">
+                            <Input
+                              type="number"
+                              className="w-14 text-center mx-auto"
                               defaultValue={team.losses}
                               onBlur={(e) => handleUpdateTeam(team, 'losses', parseInt(e.target.value) || 0)}
                             />
@@ -422,11 +735,42 @@ function PointsTableTab() {
                           <td className="py-2">
                             <Input
                               type="number"
-                              className="w-16 text-center mx-auto"
+                              className="w-14 text-center mx-auto"
                               defaultValue={team.points}
                               onBlur={(e) => handleUpdateTeam(team, 'points', parseInt(e.target.value) || 0)}
                             />
                           </td>
+                          {sport?.uses_nrr && (
+                            <td className="py-2">
+                              <Input
+                                type="number"
+                                step="0.001"
+                                className="w-20 text-center mx-auto"
+                                defaultValue={team.net_run_rate}
+                                onBlur={(e) => handleUpdateTeam(team, 'net_run_rate', parseFloat(e.target.value) || 0)}
+                              />
+                            </td>
+                          )}
+                          {sport?.uses_gd && (
+                            <td className="py-2">
+                              <Input
+                                type="number"
+                                className="w-16 text-center mx-auto"
+                                defaultValue={team.goal_difference}
+                                onBlur={(e) => handleUpdateTeam(team, 'goal_difference', parseInt(e.target.value) || 0)}
+                              />
+                            </td>
+                          )}
+                          {sport?.uses_pd && (
+                            <td className="py-2">
+                              <Input
+                                type="number"
+                                className="w-16 text-center mx-auto"
+                                defaultValue={team.point_difference}
+                                onBlur={(e) => handleUpdateTeam(team, 'point_difference', parseInt(e.target.value) || 0)}
+                              />
+                            </td>
+                          )}
                           <td className="py-2">
                             <Button
                               variant="ghost"

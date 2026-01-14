@@ -11,10 +11,19 @@ export default function Schedule() {
   const [selectedDate, setSelectedDate] = useState(festDates[0]);
   const { data: matches, isLoading } = useMatchesByDate(selectedDate);
 
-  // Group matches by category
-  const teamMatches = matches?.filter((m: any) => m.sports?.category === 'team') || [];
-  const individualMatches = matches?.filter((m: any) => m.sports?.category === 'individual') || [];
-  const minorMatches = matches?.filter((m: any) => m.sports?.category === 'minor') || [];
+  // Group matches by category and sort by time
+  const sortedMatches = matches?.slice().sort((a: any, b: any) => {
+    const timeA = a.match_time.replace(/[^0-9:]/g, '');
+    const timeB = b.match_time.replace(/[^0-9:]/g, '');
+    return timeA.localeCompare(timeB);
+  }) || [];
+
+  const teamMatches = sortedMatches.filter((m: any) => m.sports?.category === 'team');
+  const individualMatches = sortedMatches.filter((m: any) => m.sports?.category === 'individual');
+  const minorMatches = sortedMatches.filter((m: any) => m.sports?.category === 'minor');
+
+  // Check for any running matches
+  const hasRunningMatches = sortedMatches.some((m: any) => m.status === 'running');
 
   return (
     <div className="min-h-screen py-12">
@@ -23,12 +32,18 @@ export default function Schedule() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent font-medium mb-4">
             <Calendar className="w-4 h-4" />
-            January 22-25, 2025
+            January 22-25, 2026
           </div>
           <h1 className="section-title">MATCH SCHEDULE</h1>
           <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
             Select a date to view all matches scheduled for that day.
           </p>
+          {hasRunningMatches && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive font-medium animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-destructive" />
+              Live matches happening now!
+            </div>
+          )}
         </div>
 
         {/* Date Filter */}
@@ -75,6 +90,12 @@ export default function Schedule() {
                         date: match.match_date,
                         time: match.match_time,
                         venue: match.venue,
+                        teamA: match.team_a,
+                        teamB: match.team_b,
+                        matchType: match.match_type || 'group',
+                        groupName: match.group_name,
+                        status: match.status || 'upcoming',
+                        liveStreamUrl: match.live_stream_url,
                       }}
                     />
                   ))}
@@ -104,6 +125,8 @@ export default function Schedule() {
                         date: match.match_date,
                         time: match.match_time,
                         venue: match.venue,
+                        matchType: match.match_type || 'group',
+                        status: match.status || 'upcoming',
                       }}
                     />
                   ))}
@@ -133,6 +156,8 @@ export default function Schedule() {
                         date: match.match_date,
                         time: match.match_time,
                         venue: match.venue,
+                        matchType: match.match_type || 'group',
+                        status: match.status || 'upcoming',
                       }}
                     />
                   ))}
