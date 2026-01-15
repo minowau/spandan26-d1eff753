@@ -46,7 +46,7 @@ export default function TeamSports() {
         {/* Points Tables Section */}
         {!isLoading && sports && sports.length > 0 && (
           <div className="space-y-6 mt-8">
-            <div className="flex items-center gap-2 px-2 sm:px-4 lg:px-8">
+            <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">POINTS TABLES</h2>
             </div>
@@ -68,7 +68,7 @@ function SportPointsTable({ sport }: { sport: Sport }) {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-lg p-3 sm:p-4 mx-2 sm:mx-4 lg:mx-8">
+      <div className="bg-card rounded-lg p-3 sm:p-4">
         <Skeleton className="h-6 w-40 mb-3" />
         <Skeleton className="h-24 w-full" />
       </div>
@@ -76,7 +76,7 @@ function SportPointsTable({ sport }: { sport: Sport }) {
   }
 
   return (
-    <div className="bg-card rounded-lg shadow-sm overflow-hidden mx-2 sm:mx-4 lg:mx-8">
+    <div className="bg-card rounded-lg shadow-sm overflow-hidden">
       {/* Sport Header */}
       <div className="bg-primary px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2">
         <span className="text-xl sm:text-2xl">{sport.icon}</span>
