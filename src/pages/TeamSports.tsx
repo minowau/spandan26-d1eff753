@@ -45,15 +45,17 @@ export default function TeamSports() {
 
         {/* Points Tables Section */}
         {!isLoading && sports && sports.length > 0 && (
-          <div className="space-y-10">
-            <div className="flex items-center gap-3">
-              <Trophy className="w-7 h-7 text-accent" />
-              <h2 className="section-title text-3xl md:text-4xl">POINTS TABLES</h2>
+          <div className="space-y-6 mt-8">
+            <div className="flex items-center gap-2 px-2 sm:px-4 lg:px-8">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">POINTS TABLES</h2>
             </div>
             
-            {sports.map((sport) => (
-              <SportPointsTable key={sport.id} sport={sport} />
-            ))}
+            <div className="space-y-4">
+              {sports.map((sport) => (
+                <SportPointsTable key={sport.id} sport={sport} />
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -66,30 +68,32 @@ function SportPointsTable({ sport }: { sport: Sport }) {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-xl p-4 sm:p-6">
-        <Skeleton className="h-8 w-48 mb-4" />
-        <Skeleton className="h-32 w-full" />
+      <div className="bg-card rounded-lg p-3 sm:p-4 mx-2 sm:mx-4 lg:mx-8">
+        <Skeleton className="h-6 w-40 mb-3" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
 
-  if (!groups || groups.length === 0) {
-    return null;
-  }
-
   return (
-    <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-card rounded-lg shadow-sm overflow-hidden mx-2 sm:mx-4 lg:mx-8">
       {/* Sport Header */}
-      <div className="bg-primary px-4 sm:px-6 py-4 flex items-center gap-3">
-        <span className="text-2xl sm:text-3xl">{sport.icon}</span>
-        <h3 className="text-lg sm:text-xl font-bold text-primary-foreground">{sport.name}</h3>
+      <div className="bg-primary px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2">
+        <span className="text-xl sm:text-2xl">{sport.icon}</span>
+        <h3 className="text-sm sm:text-base font-bold text-primary-foreground">{sport.name}</h3>
       </div>
 
       {/* Groups */}
-      <div className="p-4 sm:p-6 space-y-6">
-        {groups.map((group) => (
-          <GroupTable key={group.id} groupId={group.id} groupName={group.name} sport={sport} />
-        ))}
+      <div className="p-3 sm:p-4 space-y-4">
+        {(!groups || groups.length === 0) ? (
+          <div className="text-muted-foreground text-xs sm:text-sm p-3 bg-secondary/30 rounded-lg text-center">
+            No groups added yet. Add groups from the Admin panel.
+          </div>
+        ) : (
+          groups.map((group) => (
+            <GroupTable key={group.id} groupId={group.id} groupName={group.name} sport={sport} />
+          ))
+        )}
       </div>
     </div>
   );
@@ -99,12 +103,12 @@ function GroupTable({ groupId, groupName, sport }: { groupId: string; groupName:
   const { data: teams, isLoading } = useTeams(groupId);
 
   if (isLoading) {
-    return <Skeleton className="h-32 w-full rounded-lg" />;
+    return <Skeleton className="h-20 w-full rounded-lg" />;
   }
 
   if (!teams || teams.length === 0) {
     return (
-      <div className="text-muted-foreground text-sm p-4 bg-secondary/30 rounded-lg">
+      <div className="text-muted-foreground text-xs sm:text-sm p-3 bg-secondary/30 rounded-lg">
         No teams added yet for {groupName}
       </div>
     );
@@ -113,24 +117,24 @@ function GroupTable({ groupId, groupName, sport }: { groupId: string; groupName:
   return (
     <div className="rounded-lg overflow-hidden border border-border">
       {/* Group Name */}
-      <div className="bg-secondary px-4 py-2">
-        <h4 className="font-semibold text-secondary-foreground text-sm sm:text-base">{groupName}</h4>
+      <div className="bg-secondary px-3 py-1.5">
+        <h4 className="font-semibold text-secondary-foreground text-xs sm:text-sm">{groupName}</h4>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="text-xs sm:text-sm">
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold min-w-[120px]">Team</TableHead>
-              <TableHead className="text-center font-semibold w-12">P</TableHead>
-              <TableHead className="text-center font-semibold w-12">W</TableHead>
-              <TableHead className="text-center font-semibold w-12">D</TableHead>
-              <TableHead className="text-center font-semibold w-12">L</TableHead>
-              <TableHead className="text-center font-semibold w-14">Pts</TableHead>
-              {sport.uses_nrr && <TableHead className="text-center font-semibold w-16">NRR</TableHead>}
-              {sport.uses_gd && <TableHead className="text-center font-semibold w-14">GD</TableHead>}
-              {sport.uses_pd && <TableHead className="text-center font-semibold w-14">PD</TableHead>}
+              <TableHead className="font-semibold min-w-[100px] py-2 px-2 sm:px-3">Team</TableHead>
+              <TableHead className="text-center font-semibold w-8 sm:w-10 py-2 px-1">P</TableHead>
+              <TableHead className="text-center font-semibold w-8 sm:w-10 py-2 px-1">W</TableHead>
+              <TableHead className="text-center font-semibold w-8 sm:w-10 py-2 px-1">D</TableHead>
+              <TableHead className="text-center font-semibold w-8 sm:w-10 py-2 px-1">L</TableHead>
+              <TableHead className="text-center font-semibold w-10 sm:w-12 py-2 px-1">Pts</TableHead>
+              {sport.uses_nrr && <TableHead className="text-center font-semibold w-12 sm:w-14 py-2 px-1">NRR</TableHead>}
+              {sport.uses_gd && <TableHead className="text-center font-semibold w-10 sm:w-12 py-2 px-1">GD</TableHead>}
+              {sport.uses_pd && <TableHead className="text-center font-semibold w-10 sm:w-12 py-2 px-1">PD</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -139,31 +143,31 @@ function GroupTable({ groupId, groupName, sport }: { groupId: string; groupName:
                 key={team.id}
                 className={index === 0 ? 'bg-sport-green/10' : ''}
               >
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
+                <TableCell className="font-medium py-1.5 sm:py-2 px-2 sm:px-3">
+                  <div className="flex items-center gap-1.5">
                     {index === 0 && (
-                      <span className="w-5 h-5 rounded-full bg-sport-green text-sport-green-foreground flex items-center justify-center text-xs font-bold shrink-0">
+                      <span className="w-4 h-4 rounded-full bg-sport-green text-sport-green-foreground flex items-center justify-center text-[10px] font-bold shrink-0">
                         1
                       </span>
                     )}
                     <span className="truncate">{team.name}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">{team.matches_played}</TableCell>
-                <TableCell className="text-center text-sport-green font-semibold">{team.wins}</TableCell>
-                <TableCell className="text-center text-muted-foreground">{team.draws}</TableCell>
-                <TableCell className="text-center text-destructive font-semibold">{team.losses}</TableCell>
-                <TableCell className="text-center font-bold text-primary">{team.points}</TableCell>
+                <TableCell className="text-center py-1.5 sm:py-2 px-1">{team.matches_played}</TableCell>
+                <TableCell className="text-center text-sport-green font-semibold py-1.5 sm:py-2 px-1">{team.wins}</TableCell>
+                <TableCell className="text-center text-muted-foreground py-1.5 sm:py-2 px-1">{team.draws}</TableCell>
+                <TableCell className="text-center text-destructive font-semibold py-1.5 sm:py-2 px-1">{team.losses}</TableCell>
+                <TableCell className="text-center font-bold text-primary py-1.5 sm:py-2 px-1">{team.points}</TableCell>
                 {sport.uses_nrr && (
-                  <TableCell className="text-center text-sm">{team.net_run_rate?.toFixed(3)}</TableCell>
+                  <TableCell className="text-center py-1.5 sm:py-2 px-1">{team.net_run_rate?.toFixed(3)}</TableCell>
                 )}
                 {sport.uses_gd && (
-                  <TableCell className="text-center text-sm">
+                  <TableCell className="text-center py-1.5 sm:py-2 px-1">
                     {(team.goal_difference ?? 0) > 0 ? `+${team.goal_difference}` : team.goal_difference}
                   </TableCell>
                 )}
                 {sport.uses_pd && (
-                  <TableCell className="text-center text-sm">
+                  <TableCell className="text-center py-1.5 sm:py-2 px-1">
                     {(team.point_difference ?? 0) > 0 ? `+${team.point_difference}` : team.point_difference}
                   </TableCell>
                 )}
