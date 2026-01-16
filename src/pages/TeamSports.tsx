@@ -144,14 +144,7 @@ function GroupTable({ groupId, groupName, sport }: { groupId: string; groupName:
                 className={index === 0 ? 'bg-sport-green/10' : ''}
               >
                 <TableCell className="font-medium py-1.5 sm:py-2 px-2 sm:px-3">
-                  <div className="flex items-center gap-1.5">
-                    {index === 0 && (
-                      <span className="w-4 h-4 rounded-full bg-sport-green text-sport-green-foreground flex items-center justify-center text-[10px] font-bold shrink-0">
-                        1
-                      </span>
-                    )}
-                    <span className="truncate">{team.name}</span>
-                  </div>
+                  <span className="truncate">{team.name}</span>
                 </TableCell>
                 <TableCell className="text-center py-1.5 sm:py-2 px-1">{team.matches_played}</TableCell>
                 <TableCell className="text-center text-sport-green font-semibold py-1.5 sm:py-2 px-1">{team.wins}</TableCell>

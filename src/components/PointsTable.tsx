@@ -31,16 +31,7 @@ export function PointsTable({ groups }: PointsTableProps) {
                       key={team.name}
                       className={`${index === 0 ? 'bg-sport-green/10' : 'bg-card'} hover:bg-secondary/50 transition-colors`}
                     >
-                      <td className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {index === 0 && (
-                            <span className="w-5 h-5 rounded-full bg-sport-green text-sport-green-foreground flex items-center justify-center text-xs font-bold">
-                              1
-                            </span>
-                          )}
-                          {team.name}
-                        </div>
-                      </td>
+                      <td className="font-medium">{team.name}</td>
                       <td className="text-center">{team.matchesPlayed}</td>
                       <td className="text-center text-sport-green font-semibold">{team.wins}</td>
                       <td className="text-center text-destructive font-semibold">{team.losses}</td>

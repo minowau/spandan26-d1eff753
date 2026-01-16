@@ -38,27 +38,27 @@ export default function Admin() {
           </p>
         </div>
 
-        <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="settings" className="gap-2">
+        <Tabs defaultValue="settings" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+            <TabsTrigger value="settings" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden xs:inline sm:inline">Settings</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2">
+            <TabsTrigger value="schedule" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Matches</span>
+              <span className="hidden xs:inline sm:inline">Matches</span>
             </TabsTrigger>
-            <TabsTrigger value="streams" className="gap-2">
+            <TabsTrigger value="streams" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Video className="w-4 h-4" />
-              <span className="hidden sm:inline">Streams</span>
+              <span className="hidden xs:inline sm:inline">Streams</span>
             </TabsTrigger>
-            <TabsTrigger value="points" className="gap-2">
+            <TabsTrigger value="points" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Points</span>
+              <span className="hidden xs:inline sm:inline">Points</span>
             </TabsTrigger>
-            <TabsTrigger value="groups" className="gap-2">
+            <TabsTrigger value="groups" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Groups</span>
+              <span className="hidden xs:inline sm:inline">Groups</span>
             </TabsTrigger>
           </TabsList>
 
@@ -124,16 +124,16 @@ function SettingsTab() {
           <CardTitle>Countdown Timer Settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-4">
-            <div className="flex-1 max-w-sm">
-              <Label className="mb-2 block">Fest Start Date & Time</Label>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+            <div className="flex-1 max-w-full sm:max-w-sm">
+              <Label className="mb-2 block text-sm">Fest Start Date & Time</Label>
               <Input
                 type="datetime-local"
                 defaultValue={settings?.fest_start_date ? new Date(settings.fest_start_date).toISOString().slice(0, 16) : '2026-01-22T09:00'}
                 onChange={(e) => setFestDate(e.target.value)}
               />
             </div>
-            <Button onClick={handleUpdateFestDate} disabled={updateSettings.isPending}>
+            <Button onClick={handleUpdateFestDate} disabled={updateSettings.isPending} className="w-full sm:w-auto">
               Save Date
             </Button>
           </div>
@@ -151,42 +151,42 @@ function SettingsTab() {
         <CardContent>
           <div className="space-y-6">
             {teamSports.map((sport) => (
-              <div key={sport.id} className="p-4 bg-secondary/50 rounded-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">{sport.icon}</span>
-                  <h4 className="font-semibold">{sport.name}</h4>
+              <div key={sport.id} className="p-3 sm:p-4 bg-secondary/50 rounded-lg">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <span className="text-xl sm:text-2xl">{sport.icon}</span>
+                  <h4 className="font-semibold text-sm sm:text-base">{sport.name}</h4>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                   <div>
-                    <Label className="text-xs">Win Points</Label>
+                    <Label className="text-xs">Win Pts</Label>
                     <Input
                       type="number"
-                      className="mt-1"
+                      className="mt-1 h-8 sm:h-9 text-sm"
                       defaultValue={sport.win_points || 2}
                       onBlur={(e) => handleUpdateScoringRules(sport, 'win_points', parseInt(e.target.value) || 0)}
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Draw Points</Label>
+                    <Label className="text-xs">Draw Pts</Label>
                     <Input
                       type="number"
-                      className="mt-1"
+                      className="mt-1 h-8 sm:h-9 text-sm"
                       defaultValue={sport.draw_points || 1}
                       onBlur={(e) => handleUpdateScoringRules(sport, 'draw_points', parseInt(e.target.value) || 0)}
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Loss Points</Label>
+                    <Label className="text-xs">Loss Pts</Label>
                     <Input
                       type="number"
-                      className="mt-1"
+                      className="mt-1 h-8 sm:h-9 text-sm"
                       defaultValue={sport.loss_points || 0}
                       onBlur={(e) => handleUpdateScoringRules(sport, 'loss_points', parseInt(e.target.value) || 0)}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1 sm:space-y-2 col-span-2 sm:col-span-1">
                     <Label className="text-xs">Tie-breaker</Label>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <div className="flex flex-wrap gap-3 sm:gap-2 mt-1">
                       <label className="flex items-center gap-1 text-xs">
                         <input
                           type="checkbox"
@@ -248,13 +248,15 @@ function LiveStreamsTab() {
         <CardHeader>
           <CardTitle>Team Sports - Default Live Stream URLs</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           {teamSports.map((sport) => (
-            <div key={sport.id} className="flex items-center gap-4">
-              <span className="text-2xl w-10">{sport.icon}</span>
-              <Label className="w-32 font-medium">{sport.name}</Label>
+            <div key={sport.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl sm:text-2xl">{sport.icon}</span>
+                <Label className="font-medium text-sm sm:text-base">{sport.name}</Label>
+              </div>
               <Input
-                className="flex-1"
+                className="flex-1 text-sm"
                 placeholder="YouTube embed URL"
                 defaultValue={sport.live_stream_url || ''}
                 onBlur={(e) => handleUpdateStream(sport.id, e.target.value)}
@@ -268,13 +270,15 @@ function LiveStreamsTab() {
         <CardHeader>
           <CardTitle>Individual Sports - Live Stream URLs</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           {individualSports.map((sport) => (
-            <div key={sport.id} className="flex items-center gap-4">
-              <span className="text-2xl w-10">{sport.icon}</span>
-              <Label className="w-32 font-medium">{sport.name}</Label>
+            <div key={sport.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl sm:text-2xl">{sport.icon}</span>
+                <Label className="font-medium text-sm sm:text-base">{sport.name}</Label>
+              </div>
               <Input
-                className="flex-1"
+                className="flex-1 text-sm"
                 placeholder="YouTube embed URL"
                 defaultValue={sport.live_stream_url || ''}
                 onBlur={(e) => handleUpdateStream(sport.id, e.target.value)}
@@ -492,50 +496,60 @@ function ScheduleTab() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {matches?.map((match: any) => (
+              {matches?.map((match: any) => (
               <div 
                 key={match.id} 
-                className={`flex items-center gap-3 p-3 rounded-lg ${
+                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg ${
                   match.status === 'running' ? 'bg-destructive/10 ring-1 ring-destructive' : 'bg-secondary/50'
                 }`}
               >
-                <span className="text-xs font-medium px-2 py-1 rounded bg-primary/10 text-primary">
-                  {match.sports?.name}
-                </span>
-                <span className={`text-xs font-medium px-2 py-1 rounded ${
-                  match.match_type === 'final' ? 'bg-accent text-accent-foreground' : 
-                  match.match_type === 'semifinal' ? 'bg-accent/20 text-accent' : 
-                  'bg-secondary text-secondary-foreground'
-                }`}>
-                  {match.match_type === 'group' ? match.group_name || 'Group' : match.match_type}
-                </span>
-                <span className="font-medium flex-1">{match.match_name}</span>
-                <span className="text-sm text-muted-foreground">Jan {match.match_date}, 2026</span>
-                <span className="text-sm text-muted-foreground">{match.match_time}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-medium px-2 py-1 rounded bg-primary/10 text-primary">
+                    {match.sports?.name}
+                  </span>
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${
+                    match.match_type === 'final' ? 'bg-accent text-accent-foreground' : 
+                    match.match_type === 'semifinal' ? 'bg-accent/20 text-accent' : 
+                    'bg-secondary text-secondary-foreground'
+                  }`}>
+                    {match.match_type === 'group' ? match.group_name || 'Group' : match.match_type}
+                  </span>
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium text-sm sm:text-base block truncate">{match.match_name}</span>
+                  <span className="text-xs text-muted-foreground sm:hidden">
+                    Jan {match.match_date}, 2026 • {match.match_time}
+                  </span>
+                </div>
+                
+                <span className="hidden sm:inline text-sm text-muted-foreground whitespace-nowrap">Jan {match.match_date}, 2026</span>
+                <span className="hidden sm:inline text-sm text-muted-foreground">{match.match_time}</span>
                 
                 {/* Status controls */}
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   <Button
                     variant={match.status === 'upcoming' ? 'secondary' : 'ghost'}
                     size="sm"
-                    className="text-xs px-2"
+                    className="text-xs px-2 h-7 sm:h-8"
                     onClick={() => handleToggleStatus(match, 'upcoming')}
                   >
-                    Upcoming
+                    <span className="hidden sm:inline">Upcoming</span>
+                    <span className="sm:hidden">Soon</span>
                   </Button>
                   <Button
                     variant={match.status === 'running' ? 'destructive' : 'ghost'}
                     size="sm"
-                    className="text-xs px-2"
+                    className="text-xs px-2 h-7 sm:h-8"
                     onClick={() => handleToggleStatus(match, 'running')}
                   >
-                    <Play className="w-3 h-3 mr-1" />
-                    Live
+                    <Play className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Live</span>
                   </Button>
                   <Button
                     variant={match.status === 'completed' ? 'default' : 'ghost'}
                     size="sm"
-                    className="text-xs px-2"
+                    className="text-xs px-2 h-7 sm:h-8"
                     onClick={() => handleToggleStatus(match, 'completed')}
                   >
                     Done
@@ -545,6 +559,7 @@ function ScheduleTab() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                   onClick={() => handleDeleteMatch(match.id)}
                   disabled={deleteMatch.isPending}
                 >
@@ -633,9 +648,9 @@ function PointsTableTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Select value={newTeam.group_id} onValueChange={(v) => setNewTeam({ ...newTeam, group_id: v })}>
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Select Group" />
               </SelectTrigger>
               <SelectContent>
@@ -655,7 +670,7 @@ function PointsTableTab() {
               value={newTeam.name}
               onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
             />
-            <Button onClick={handleAddTeam} disabled={createTeam.isPending}>
+            <Button onClick={handleAddTeam} disabled={createTeam.isPending} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Team
             </Button>
@@ -838,9 +853,9 @@ function GroupsTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Select value={newGroup.sport_id} onValueChange={(v) => setNewGroup({ ...newGroup, sport_id: v })}>
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Select Team Sport" />
               </SelectTrigger>
               <SelectContent>
@@ -857,7 +872,7 @@ function GroupsTab() {
               value={newGroup.name}
               onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
             />
-            <Button onClick={handleAddGroup} disabled={createGroup.isPending}>
+            <Button onClick={handleAddGroup} disabled={createGroup.isPending} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Group
             </Button>
