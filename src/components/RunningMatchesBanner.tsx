@@ -29,23 +29,23 @@ export function RunningMatchesBanner() {
         </div>
         
         {/* Scrolling ticker for multiple matches */}
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 overflow-hidden relative group">
           {/* Fade edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-destructive to-transparent z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-destructive to-transparent z-10" />
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-destructive to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-destructive to-transparent z-10 pointer-events-none" />
           
           <div 
-            className={`flex ${hasMultipleMatches ? 'animate-marquee' : 'justify-center'}`}
+            className={`flex ${hasMultipleMatches ? 'animate-marquee group-hover:[animation-play-state:paused]' : 'justify-center'}`}
             style={hasMultipleMatches ? { width: 'max-content' } : undefined}
           >
             {displayMatches.map((match: any, idx: number) => (
               <Link
                 key={`${match.id}-${idx}`}
                 to={`/team-sports/${match.sport_id}`}
-                className="flex items-center gap-3 px-6 whitespace-nowrap hover:bg-destructive-foreground/10 transition-colors py-1 rounded"
+                className="flex items-center gap-3 px-6 whitespace-nowrap hover:bg-destructive-foreground/20 active:bg-destructive-foreground/30 transition-colors py-1.5 rounded cursor-pointer"
               >
                 <span className="text-lg">{match.sports?.icon}</span>
-                <span className="font-semibold">{match.match_name}</span>
+                <span className="font-semibold underline-offset-2 hover:underline">{match.match_name}</span>
                 {match.venue && (
                   <span className="text-destructive-foreground/70 text-sm">• {match.venue}</span>
                 )}
