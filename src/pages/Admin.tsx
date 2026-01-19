@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square } from 'lucide-react';
+import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import {
   useSports,
   useAllGroups,
@@ -28,14 +30,38 @@ import {
 } from '@/hooks/useSportsData';
 
 export default function Admin() {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error('Failed to sign out');
+    } else {
+      toast.success('Signed out successfully');
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen py-8">
       <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="section-title">ADMIN PANEL</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage schedules, points tables, live streams, and settings for Spandan'26
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="section-title">ADMIN PANEL</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage schedules, points tables, live streams, and settings for Spandan'26
+            </p>
+            {user && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Logged in as: {user.email}
+              </p>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={handleSignOut} className="self-start">
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
 
         <Tabs defaultValue="settings" className="space-y-4 sm:space-y-6">
