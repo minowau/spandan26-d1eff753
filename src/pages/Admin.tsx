@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square } from 'lucide-react';
+import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square, Upload } from 'lucide-react';
+import { BulkImport } from '@/components/BulkImport';
 import { toast } from 'sonner';
 import {
   useSports,
@@ -39,7 +40,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-6 h-auto p-1">
             <TabsTrigger value="settings" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Settings className="w-4 h-4" />
               <span className="hidden xs:inline sm:inline">Settings</span>
@@ -60,6 +61,10 @@ export default function Admin() {
               <Users className="w-4 h-4" />
               <span className="hidden xs:inline sm:inline">Groups</span>
             </TabsTrigger>
+            <TabsTrigger value="import" className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+              <Upload className="w-4 h-4" />
+              <span className="hidden xs:inline sm:inline">Import</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -76,6 +81,9 @@ export default function Admin() {
           </TabsContent>
           <TabsContent value="groups">
             <GroupsTab />
+          </TabsContent>
+          <TabsContent value="import">
+            <BulkImportTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -805,6 +813,62 @@ function PointsTableTab() {
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+function BulkImportTab() {
+  const handleRefresh = () => {
+    // Force refetch by reloading the page or rely on React Query's cache invalidation
+    window.location.reload();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <BulkImport type="groups" onSuccess={handleRefresh} />
+        <BulkImport type="teams" onSuccess={handleRefresh} />
+        <BulkImport type="matches" onSuccess={handleRefresh} />
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Import Instructions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-medium mb-2">📋 Step-by-step guide:</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              <li>First, import <strong>Groups</strong> (they are needed for teams)</li>
+              <li>Note down the group IDs from the Groups tab after import</li>
+              <li>Import <strong>Teams</strong> using the group IDs</li>
+              <li>Import <strong>Matches</strong> using sport IDs (cricket, football, etc.)</li>
+            </ol>
+          </div>
+          
+          <div>
+            <h4 className="font-medium mb-2">📝 Valid Sport IDs:</h4>
+            <p className="text-sm text-muted-foreground">
+              cricket, football, basketball, volleyball, throwball, kabaddi, 
+              athletics, badminton, table-tennis, chess, carrom, tug-of-war
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium mb-2">📅 Valid Match Dates:</h4>
+            <p className="text-sm text-muted-foreground">
+              "22", "23", "24", "25" (representing Jan 22-25, 2026)
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium mb-2">🏷️ Match Types:</h4>
+            <p className="text-sm text-muted-foreground">
+              "group", "eliminator", "semifinal", "final"
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
