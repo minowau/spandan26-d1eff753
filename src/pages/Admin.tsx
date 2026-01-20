@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square, Upload } from 'lucide-react';
 import { BulkImport } from '@/components/BulkImport';
+import { TimePicker } from '@/components/TimePicker';
 import { toast } from 'sonner';
 import {
   useSports,
@@ -471,11 +472,13 @@ function ScheduleTab() {
               value={newMatch.match_name}
               onChange={(e) => setNewMatch({ ...newMatch, match_name: e.target.value })}
             />
-            <Input
-              placeholder="Time (e.g., 9:00 AM)"
-              value={newMatch.match_time}
-              onChange={(e) => setNewMatch({ ...newMatch, match_time: e.target.value })}
-            />
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Time (24h)</span>
+              <TimePicker
+                value={newMatch.match_time}
+                onChange={(time) => setNewMatch({ ...newMatch, match_time: time })}
+              />
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
