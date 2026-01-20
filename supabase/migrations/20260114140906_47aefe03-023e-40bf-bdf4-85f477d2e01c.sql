@@ -6,13 +6,7 @@ CREATE TABLE public.settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Enable RLS on settings
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
 
--- Public read/write policies for settings
-CREATE POLICY "Allow public read on settings" ON public.settings FOR SELECT USING (true);
-CREATE POLICY "Allow public update on settings" ON public.settings FOR UPDATE USING (true);
-CREATE POLICY "Allow public insert on settings" ON public.settings FOR INSERT WITH CHECK (true);
 
 -- Insert default settings
 INSERT INTO public.settings (id, fest_start_date) VALUES ('global', '2026-01-22T09:00:00+05:30');
@@ -56,13 +50,7 @@ CREATE TABLE public.chat_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Enable RLS on chat_messages
-ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
--- Public read/write policies for chat_messages
-CREATE POLICY "Allow public read on chat_messages" ON public.chat_messages FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on chat_messages" ON public.chat_messages FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public delete on chat_messages" ON public.chat_messages FOR DELETE USING (true);
 
 -- Enable realtime for chat_messages
 ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;

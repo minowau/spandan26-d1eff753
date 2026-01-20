@@ -46,26 +46,7 @@ ALTER TABLE public.groups DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teams DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.matches DISABLE ROW LEVEL SECURITY;
 
--- Public read/write policies (no auth required)
-CREATE POLICY "Allow public read on sports" ON public.sports FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on sports" ON public.sports FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update on sports" ON public.sports FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete on sports" ON public.sports FOR DELETE USING (true);
 
-CREATE POLICY "Allow public read on groups" ON public.groups FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on groups" ON public.groups FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update on groups" ON public.groups FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete on groups" ON public.groups FOR DELETE USING (true);
-
-CREATE POLICY "Allow public read on teams" ON public.teams FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on teams" ON public.teams FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update on teams" ON public.teams FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete on teams" ON public.teams FOR DELETE USING (true);
-
-CREATE POLICY "Allow public read on matches" ON public.matches FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on matches" ON public.matches FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update on matches" ON public.matches FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete on matches" ON public.matches FOR DELETE USING (true);
 
 -- Insert initial sports data
 INSERT INTO public.sports (id, name, category, icon, description, live_stream_url) VALUES
