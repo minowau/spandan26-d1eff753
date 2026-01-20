@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Video } from 'lucide-react';
+import { ArrowLeft, Calendar, Video, Search, X } from 'lucide-react';
 import { useSport, useGroups, useTeams, useMatchesBySport, type Sport } from '@/hooks/useSportsData';
 import { LiveStream } from '@/components/LiveStream';
 import { LiveChat } from '@/components/LiveChat';
 import { MatchStatusBadge, MatchTypeBadge } from '@/components/MatchStatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function SportDetail() {
   const { sportId } = useParams<{ sportId: string }>();
+  const [searchQuery, setSearchQuery] = useState('');
   const { data: sport, isLoading: sportLoading } = useSport(sportId || '');
   const { data: groups } = useGroups(sportId || '');
   const { data: matches } = useMatchesBySport(sportId || '');
@@ -57,6 +61,19 @@ export default function SportDetail() {
   // Find currently running match
   const runningMatch = matches?.find(m => m.status === 'running');
   const currentStreamUrl = runningMatch?.live_stream_url || sport.live_stream_url;
+
+  // Filter matches by search query
+  const filteredMatches = matches?.filter(match => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      match.match_name?.toLowerCase().includes(query) ||
+      match.team_a?.toLowerCase().includes(query) ||
+      match.team_b?.toLowerCase().includes(query) ||
+      match.venue?.toLowerCase().includes(query) ||
+      match.group_name?.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="min-h-screen py-12">
@@ -122,12 +139,38 @@ export default function SportDetail() {
                 <Calendar className="w-5 h-5 text-accent" />
                 Match Schedule
               </h3>
-              {matches && matches.length > 0 ? (
+              
+              {/* Search Input */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search matches..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9 h-9 text-sm"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+
+              {filteredMatches && filteredMatches.length > 0 ? (
                 <div className="space-y-3">
-                  {matches.map((match) => (
+                  {filteredMatches.map((match) => (
                     <ScheduleItem key={match.id} match={match} />
                   ))}
                 </div>
+              ) : searchQuery ? (
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  No matches found for "{searchQuery}"
+                </p>
               ) : (
                 <p className="text-muted-foreground text-sm">
                   No matches scheduled yet.
