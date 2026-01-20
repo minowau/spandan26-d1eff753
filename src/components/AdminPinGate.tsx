@@ -8,7 +8,7 @@ interface AdminPinGateProps {
   onSuccess: () => void;
 }
 
-const ADMIN_PIN = '5555';
+const ADMIN_PIN = '9494';
 
 export function AdminPinGate({ onSuccess }: AdminPinGateProps) {
   const [pin, setPin] = useState(['', '', '', '']);
@@ -88,12 +88,13 @@ export function AdminPinGate({ onSuccess }: AdminPinGateProps) {
               <Input
                 key={index}
                 ref={(el) => (inputRefs.current[index] = el)}
-                type="text"
+                type="password"
                 inputMode="numeric"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
+                autoComplete="off"
                 className={`w-14 h-14 text-center text-2xl font-bold ${
                   error ? 'border-destructive animate-shake' : ''
                 }`}
