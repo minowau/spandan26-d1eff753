@@ -1,22 +1,40 @@
 import { useState } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, Search, X } from 'lucide-react';
 import { useMatchesByDate } from '@/hooks/useSportsData';
 import { DateFilter } from '@/components/DateFilter';
 import { ScheduleCard } from '@/components/ScheduleCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const festDates = ['22', '23', '24', '25'];
 
 export default function Schedule() {
   const [selectedDate, setSelectedDate] = useState(festDates[0]);
+  const [searchQuery, setSearchQuery] = useState('');
   const { data: matches, isLoading } = useMatchesByDate(selectedDate);
 
+  // Filter matches by search query
+  const filterBySearch = (match: any) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      match.match_name?.toLowerCase().includes(query) ||
+      match.team_a?.toLowerCase().includes(query) ||
+      match.team_b?.toLowerCase().includes(query) ||
+      match.sports?.name?.toLowerCase().includes(query) ||
+      match.venue?.toLowerCase().includes(query)
+    );
+  };
+
   // Group matches by category and sort by time
-  const sortedMatches = matches?.slice().sort((a: any, b: any) => {
-    const timeA = a.match_time.replace(/[^0-9:]/g, '');
-    const timeB = b.match_time.replace(/[^0-9:]/g, '');
-    return timeA.localeCompare(timeB);
-  }) || [];
+  const sortedMatches = matches?.slice()
+    .filter(filterBySearch)
+    .sort((a: any, b: any) => {
+      const timeA = a.match_time.replace(/[^0-9:]/g, '');
+      const timeB = b.match_time.replace(/[^0-9:]/g, '');
+      return timeA.localeCompare(timeB);
+    }) || [];
 
   const teamMatches = sortedMatches.filter((m: any) => m.sports?.category === 'team');
   const individualMatches = sortedMatches.filter((m: any) => m.sports?.category === 'individual');
@@ -46,8 +64,28 @@ export default function Schedule() {
           )}
         </div>
 
-        {/* Date Filter */}
-        <div className="mb-10">
+        {/* Search & Date Filter */}
+        <div className="mb-10 space-y-4">
+          {/* Search Input */}
+          <div className="max-w-md mx-auto relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search matches, teams, sports, venues..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
           <DateFilter selectedDate={selectedDate} onDateChange={setSelectedDate} />
         </div>
 

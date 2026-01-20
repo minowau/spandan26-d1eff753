@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { censorMessage } from '@/utils/censorWords';
 
 interface ChatMessage {
   id: string;
@@ -81,10 +82,14 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
       localStorage.setItem('spandan_username', finalUsername);
     }
 
+    // Censor the message before sending
+    const censoredMessage = censorMessage(newMessage.trim());
+    const censoredUsername = censorMessage(finalUsername);
+
     await supabase.from('chat_messages').insert({
       sport_id: sportId,
-      message: newMessage.trim(),
-      username: finalUsername,
+      message: censoredMessage,
+      username: censoredUsername,
     });
 
     setNewMessage('');
