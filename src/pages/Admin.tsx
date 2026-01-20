@@ -419,21 +419,6 @@ function ScheduleTab() {
               </SelectContent>
             </Select>
 
-            {newMatch.match_type === 'group' && sportGroups.length > 0 && (
-              <Select value={newMatch.group_name} onValueChange={(v) => setNewMatch({ ...newMatch, group_name: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sportGroups.map((group) => (
-                    <SelectItem key={group.id} value={group.name}>
-                      {group.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
             <Select value={newMatch.match_date} onValueChange={(v) => setNewMatch({ ...newMatch, match_date: v })}>
               <SelectTrigger>
                 <SelectValue />
@@ -445,7 +430,66 @@ function ScheduleTab() {
                 <SelectItem value="25">Jan 25, 2026</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={newMatch.match_time} onValueChange={(v) => setNewMatch({ ...newMatch, match_time: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6:00 AM">6:00 AM</SelectItem>
+                <SelectItem value="6:30 AM">6:30 AM</SelectItem>
+                <SelectItem value="7:00 AM">7:00 AM</SelectItem>
+                <SelectItem value="7:30 AM">7:30 AM</SelectItem>
+                <SelectItem value="8:00 AM">8:00 AM</SelectItem>
+                <SelectItem value="8:30 AM">8:30 AM</SelectItem>
+                <SelectItem value="9:00 AM">9:00 AM</SelectItem>
+                <SelectItem value="9:30 AM">9:30 AM</SelectItem>
+                <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+                <SelectItem value="10:30 AM">10:30 AM</SelectItem>
+                <SelectItem value="11:00 AM">11:00 AM</SelectItem>
+                <SelectItem value="11:30 AM">11:30 AM</SelectItem>
+                <SelectItem value="12:00 PM">12:00 PM</SelectItem>
+                <SelectItem value="12:30 PM">12:30 PM</SelectItem>
+                <SelectItem value="1:00 PM">1:00 PM</SelectItem>
+                <SelectItem value="1:30 PM">1:30 PM</SelectItem>
+                <SelectItem value="2:00 PM">2:00 PM</SelectItem>
+                <SelectItem value="2:30 PM">2:30 PM</SelectItem>
+                <SelectItem value="3:00 PM">3:00 PM</SelectItem>
+                <SelectItem value="3:30 PM">3:30 PM</SelectItem>
+                <SelectItem value="4:00 PM">4:00 PM</SelectItem>
+                <SelectItem value="4:30 PM">4:30 PM</SelectItem>
+                <SelectItem value="5:00 PM">5:00 PM</SelectItem>
+                <SelectItem value="5:30 PM">5:30 PM</SelectItem>
+                <SelectItem value="6:00 PM">6:00 PM</SelectItem>
+                <SelectItem value="6:30 PM">6:30 PM</SelectItem>
+                <SelectItem value="7:00 PM">7:00 PM</SelectItem>
+                <SelectItem value="7:30 PM">7:30 PM</SelectItem>
+                <SelectItem value="8:00 PM">8:00 PM</SelectItem>
+                <SelectItem value="8:30 PM">8:30 PM</SelectItem>
+                <SelectItem value="9:00 PM">9:00 PM</SelectItem>
+                <SelectItem value="9:30 PM">9:30 PM</SelectItem>
+                <SelectItem value="10:00 PM">10:00 PM</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Group selection - only show when match_type is 'group' and sport has groups */}
+          {newMatch.match_type === 'group' && sportGroups.length > 0 && (
+            <div className="mb-4">
+              <Select value={newMatch.group_name} onValueChange={(v) => setNewMatch({ ...newMatch, group_name: v })}>
+                <SelectTrigger className="w-full sm:w-64">
+                  <SelectValue placeholder="Select Group (required for group matches)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sportGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.name}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <Input
@@ -464,18 +508,13 @@ function ScheduleTab() {
               onChange={(e) => setNewMatch({ ...newMatch, match_name: e.target.value })}
             />
             <Input
-              placeholder="Time (e.g., 9:00 AM)"
-              value={newMatch.match_time}
-              onChange={(e) => setNewMatch({ ...newMatch, match_time: e.target.value })}
-            />
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-4">
-            <Input
               placeholder="Venue (optional)"
               value={newMatch.venue}
               onChange={(e) => setNewMatch({ ...newMatch, venue: e.target.value })}
             />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
             <Input
               placeholder="Live Stream URL (optional)"
               value={newMatch.live_stream_url}
