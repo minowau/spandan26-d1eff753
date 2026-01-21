@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square, Upload, Download } from 'lucide-react';
+import { Trash2, Plus, Video, Calendar, Trophy, Users, Settings, Play, Square, Upload, Download, Search, Filter } from 'lucide-react';
 import { BulkImport } from '@/components/BulkImport';
 import { TimePicker } from '@/components/TimePicker';
 import { DataExport } from '@/components/DataExport';
@@ -325,6 +325,23 @@ function ScheduleTab() {
   const createMatch = useCreateMatch();
   const updateMatch = useUpdateMatch();
   const deleteMatch = useDeleteMatch();
+
+  const [filterSportId, setFilterSportId] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredMatches = useMemo(() => {
+    if (!matches) return [];
+    return matches.filter((match: any) => {
+      const matchesSport = filterSportId === 'all' || match.sport_id === filterSportId;
+      const matchesSearch = searchQuery === '' || 
+        match.match_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        match.team_a?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        match.team_b?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        match.venue?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        match.sports?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSport && matchesSearch;
+    });
+  }, [matches, filterSportId, searchQuery]);
 
   const [newMatch, setNewMatch] = useState({
     sport_id: '',
@@ -676,11 +693,38 @@ function ScheduleTab() {
       {/* Existing Matches */}
       <Card>
         <CardHeader>
-          <CardTitle>All Matches ({matches?.length || 0})</CardTitle>
+          <CardTitle>All Matches ({filteredMatches.length} of {matches?.length || 0})</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search matches, teams, venue..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={filterSportId} onValueChange={setFilterSportId}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filter by sport" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sports</SelectItem>
+                {sports?.map((sport) => (
+                  <SelectItem key={sport.id} value={sport.id}>
+                    {sport.icon} {sport.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="space-y-2">
-              {matches?.map((match: any) => (
+              {filteredMatches.map((match: any) => (
               <div 
                 key={match.id} 
                 className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg ${
