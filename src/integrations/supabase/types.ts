@@ -19,6 +19,7 @@ export type Database = {
           created_at: string | null
           id: string
           message: string
+          reply_to: string | null
           sport_id: string
           username: string
         }
@@ -26,6 +27,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message: string
+          reply_to?: string | null
           sport_id: string
           username?: string
         }
@@ -33,10 +35,18 @@ export type Database = {
           created_at?: string | null
           id?: string
           message?: string
+          reply_to?: string | null
           sport_id?: string
           username?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_sport_id_fkey"
             columns: ["sport_id"]
@@ -103,6 +113,38 @@ export type Database = {
             columns: ["sport_id"]
             isOneToOne: false
             referencedRelation: "sports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_votes: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          team_voted: string
+          user_identifier: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          team_voted: string
+          user_identifier: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          team_voted?: string
+          user_identifier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_votes_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
             referencedColumns: ["id"]
           },
         ]
