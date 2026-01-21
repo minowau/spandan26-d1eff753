@@ -11,6 +11,7 @@ import IndividualSports from "./pages/IndividualSports";
 import MinorSports from "./pages/MinorSports";
 import SportDetail from "./pages/SportDetail";
 import Schedule from "./pages/Schedule";
+import FanLeaderboard from "./pages/FanLeaderboard";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/minor-sports" element={<MinorSports />} />
               <Route path="/minor-sports/:sportId" element={<SportDetail />} />
               <Route path="/schedule" element={<Schedule />} />
+              <Route path="/fan-leaderboard" element={<FanLeaderboard />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

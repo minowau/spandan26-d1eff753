@@ -16,6 +16,9 @@ const navItems = [{
 }, {
   name: 'Schedule',
   path: '/schedule'
+}, {
+  name: 'Leaderboard',
+  path: '/fan-leaderboard'
 }];
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
