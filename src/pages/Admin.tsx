@@ -340,6 +340,19 @@ function ScheduleTab() {
     live_stream_url: '',
   });
 
+  const [editingMatch, setEditingMatch] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    match_name: '',
+    match_date: '',
+    match_time: '',
+    venue: '',
+    team_a: '',
+    team_b: '',
+    match_type: 'group',
+    group_name: '',
+    live_stream_url: '',
+  });
+
   const handleAddMatch = () => {
     if (!newMatch.sport_id || !newMatch.match_time) {
       toast.error('Please fill sport and time');
@@ -384,6 +397,52 @@ function ScheduleTab() {
     });
   };
 
+  const handleStartEdit = (match: any) => {
+    setEditingMatch(match);
+    setEditForm({
+      match_name: match.match_name || '',
+      match_date: match.match_date || '22',
+      match_time: match.match_time || '',
+      venue: match.venue || '',
+      team_a: match.team_a || '',
+      team_b: match.team_b || '',
+      match_type: match.match_type || 'group',
+      group_name: match.group_name || '',
+      live_stream_url: match.live_stream_url || '',
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingMatch) return;
+    
+    const matchName = editForm.team_a && editForm.team_b 
+      ? `${editForm.team_a} vs ${editForm.team_b}` 
+      : editForm.match_name;
+
+    updateMatch.mutate({
+      id: editingMatch.id,
+      match_name: matchName,
+      match_date: editForm.match_date,
+      match_time: editForm.match_time,
+      venue: editForm.venue || null,
+      team_a: editForm.team_a || null,
+      team_b: editForm.team_b || null,
+      match_type: editForm.match_type as 'group' | 'eliminator' | 'semifinal' | 'final',
+      group_name: editForm.group_name || null,
+      live_stream_url: editForm.live_stream_url || null,
+    }, {
+      onSuccess: () => {
+        toast.success('Match updated!');
+        setEditingMatch(null);
+      },
+      onError: () => toast.error('Failed to update match'),
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMatch(null);
+  };
+
   const handleToggleStatus = (match: any, newStatus: 'upcoming' | 'running' | 'completed') => {
     updateMatch.mutate(
       { id: match.id, status: newStatus },
@@ -405,6 +464,7 @@ function ScheduleTab() {
 
   const selectedSport = sports?.find(s => s.id === newMatch.sport_id);
   const sportGroups = groups?.filter(g => g.sport_id === newMatch.sport_id) || [];
+  const editSportGroups = editingMatch ? groups?.filter(g => g.sport_id === editingMatch.sport_id) || [] : [];
 
   return (
     <div className="space-y-6">
@@ -515,6 +575,104 @@ function ScheduleTab() {
         </CardContent>
       </Card>
 
+      {/* Edit Match Dialog */}
+      {editingMatch && (
+        <Card className="border-2 border-accent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-accent">
+              ✏️ Editing: {editingMatch.match_name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <Select value={editForm.match_type} onValueChange={(v) => setEditForm({ ...editForm, match_type: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Match Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="group">Group Stage</SelectItem>
+                  <SelectItem value="eliminator">Eliminator</SelectItem>
+                  <SelectItem value="semifinal">Semi Final</SelectItem>
+                  <SelectItem value="final">Final</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {editForm.match_type === 'group' && editSportGroups.length > 0 && (
+                <Select value={editForm.group_name} onValueChange={(v) => setEditForm({ ...editForm, group_name: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editSportGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.name}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Select value={editForm.match_date} onValueChange={(v) => setEditForm({ ...editForm, match_date: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="22">Jan 22, 2026</SelectItem>
+                  <SelectItem value="23">Jan 23, 2026</SelectItem>
+                  <SelectItem value="24">Jan 24, 2026</SelectItem>
+                  <SelectItem value="25">Jan 25, 2026</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Time (24h)</span>
+                <TimePicker
+                  value={editForm.match_time}
+                  onChange={(time) => setEditForm({ ...editForm, match_time: time })}
+                />
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <Input
+                placeholder="Team A"
+                value={editForm.team_a}
+                onChange={(e) => setEditForm({ ...editForm, team_a: e.target.value })}
+              />
+              <Input
+                placeholder="Team B"
+                value={editForm.team_b}
+                onChange={(e) => setEditForm({ ...editForm, team_b: e.target.value })}
+              />
+              <Input
+                placeholder="Or Match Name"
+                value={editForm.match_name}
+                onChange={(e) => setEditForm({ ...editForm, match_name: e.target.value })}
+              />
+              <Input
+                placeholder="Venue"
+                value={editForm.venue}
+                onChange={(e) => setEditForm({ ...editForm, venue: e.target.value })}
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Input
+                placeholder="Live Stream URL"
+                value={editForm.live_stream_url}
+                onChange={(e) => setEditForm({ ...editForm, live_stream_url: e.target.value })}
+              />
+              <Button onClick={handleSaveEdit} disabled={updateMatch.isPending}>
+                ✓ Save Changes
+              </Button>
+              <Button variant="outline" onClick={handleCancelEdit}>
+                ✕ Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Existing Matches */}
       <Card>
         <CardHeader>
@@ -544,13 +702,10 @@ function ScheduleTab() {
                 
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-sm sm:text-base block truncate">{match.match_name}</span>
-                  <span className="text-xs text-muted-foreground sm:hidden">
-                    Jan {match.match_date}, 2026 • {match.match_time}
+                  <span className="text-xs text-muted-foreground">
+                    Jan {match.match_date}, 2026 • {match.match_time} {match.venue && `• 📍${match.venue}`}
                   </span>
                 </div>
-                
-                <span className="hidden sm:inline text-sm text-muted-foreground whitespace-nowrap">Jan {match.match_date}, 2026</span>
-                <span className="hidden sm:inline text-sm text-muted-foreground">{match.match_time}</span>
                 
                 {/* Status controls */}
                 <div className="flex gap-1 flex-wrap">
@@ -581,6 +736,15 @@ function ScheduleTab() {
                     Done
                   </Button>
                 </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 sm:h-8 text-xs"
+                  onClick={() => handleStartEdit(match)}
+                >
+                  ✏️ Edit
+                </Button>
                 
                 <Button
                   variant="ghost"

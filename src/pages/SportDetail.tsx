@@ -8,7 +8,7 @@ import { MatchStatusBadge, MatchTypeBadge } from '@/components/MatchStatusBadge'
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
+import { ScrollArea } from '@/components/ui/scroll-area';
 export default function SportDetail() {
   const { sportId } = useParams<{ sportId: string }>();
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,81 +104,67 @@ export default function SportDetail() {
           )}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Live Stream */}
-            {currentStreamUrl && (
-              <LiveStream url={currentStreamUrl} title={runningMatch?.match_name || sport.name} />
-            )}
-
-            {/* Live Chat (Team Sports Only) */}
-            {sport.category === 'team' && (
-              <LiveChat sportId={sport.id} sportName={sport.name} />
-            )}
-
-            {/* Points Table (Team Sports Only) */}
-            {groups && groups.length > 0 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  📊 Points Table
-                </h2>
-                <div className="space-y-6">
-                  {groups.map((group) => (
-                    <GroupPointsTable key={group.id} groupId={group.id} groupName={group.name} sport={sport} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar - Schedule */}
-          <div>
-            <div className="bg-card rounded-xl p-6 shadow-sm sticky top-24">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-accent" />
-                Match Schedule
-              </h3>
-              
-              {/* Search Input */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search matches..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-9 h-9 text-sm"
+        {/* Dynamic layout based on content availability */}
+        {(() => {
+          const hasStream = !!currentStreamUrl;
+          const hasChat = sport.category === 'team';
+          const hasMainContent = hasStream || hasChat || (groups && groups.length > 0);
+          
+          // If no main content, center the schedule
+          if (!hasMainContent) {
+            return (
+              <div className="max-w-2xl mx-auto">
+                <MatchSchedulePanel 
+                  filteredMatches={filteredMatches} 
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  isCentered={true}
                 />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
+              </div>
+            );
+          }
+          
+          return (
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* Live Stream */}
+                {hasStream && (
+                  <LiveStream url={currentStreamUrl} title={runningMatch?.match_name || sport.name} />
+                )}
+
+                {/* Live Chat (Team Sports Only) */}
+                {hasChat && (
+                  <LiveChat sportId={sport.id} sportName={sport.name} />
+                )}
+
+                {/* Points Table (Team Sports Only) */}
+                {groups && groups.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      📊 Points Table
+                    </h2>
+                    <div className="space-y-6">
+                      {groups.map((group) => (
+                        <GroupPointsTable key={group.id} groupId={group.id} groupName={group.name} sport={sport} />
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {filteredMatches && filteredMatches.length > 0 ? (
-                <div className="space-y-3">
-                  {filteredMatches.map((match) => (
-                    <ScheduleItem key={match.id} match={match} />
-                  ))}
-                </div>
-              ) : searchQuery ? (
-                <p className="text-muted-foreground text-sm text-center py-4">
-                  No matches found for "{searchQuery}"
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No matches scheduled yet.
-                </p>
-              )}
+              {/* Sidebar - Schedule */}
+              <div>
+                <MatchSchedulePanel 
+                  filteredMatches={filteredMatches} 
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  isCentered={false}
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -248,32 +234,92 @@ function GroupPointsTable({ groupId, groupName, sport }: { groupId: string; grou
   );
 }
 
-function ScheduleItem({ match }: { match: any }) {
+function MatchSchedulePanel({ 
+  filteredMatches, 
+  searchQuery, 
+  setSearchQuery, 
+  isCentered 
+}: { 
+  filteredMatches: any[] | undefined; 
+  searchQuery: string; 
+  setSearchQuery: (q: string) => void; 
+  isCentered: boolean;
+}) {
+  return (
+    <div className={`bg-card rounded-xl p-6 shadow-sm sticky top-24 ${isCentered ? 'w-full' : ''}`}>
+      <h3 className={`font-bold mb-4 flex items-center gap-2 ${isCentered ? 'text-xl' : 'text-lg'}`}>
+        <Calendar className={`text-accent ${isCentered ? 'w-6 h-6' : 'w-5 h-5'}`} />
+        Match Schedule
+      </h3>
+      
+      {/* Search Input */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search matches..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 pr-9 h-9 text-sm"
+        />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+            onClick={() => setSearchQuery('')}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
+
+      {filteredMatches && filteredMatches.length > 0 ? (
+        <ScrollArea className={isCentered ? 'h-[500px]' : 'h-[400px]'}>
+          <div className="space-y-3 pr-4">
+            {filteredMatches.map((match) => (
+              <ScheduleItem key={match.id} match={match} isCentered={isCentered} />
+            ))}
+          </div>
+        </ScrollArea>
+      ) : searchQuery ? (
+        <p className="text-muted-foreground text-sm text-center py-4">
+          No matches found for "{searchQuery}"
+        </p>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          No matches scheduled yet.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ScheduleItem({ match, isCentered = false }: { match: any; isCentered?: boolean }) {
   const isRunning = match.status === 'running';
 
   return (
-    <div className={`p-3 rounded-lg ${isRunning ? 'bg-destructive/10 ring-1 ring-destructive' : 'bg-secondary/50'}`}>
+    <div className={`rounded-lg ${isRunning ? 'bg-destructive/10 ring-1 ring-destructive' : 'bg-secondary/50'} ${isCentered ? 'p-4' : 'p-3'}`}>
       <div className="flex items-center gap-2 mb-1">
         <MatchTypeBadge matchType={match.match_type || 'group'} groupName={match.group_name} />
         <MatchStatusBadge status={match.status || 'upcoming'} />
       </div>
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="font-medium text-sm">
+          <p className={`font-medium ${isCentered ? 'text-base' : 'text-sm'}`}>
             {match.team_a && match.team_b ? `${match.team_a} vs ${match.team_b}` : match.match_name}
           </p>
         </div>
-        <div className="text-right text-xs text-muted-foreground">
+        <div className={`text-right text-muted-foreground ${isCentered ? 'text-sm' : 'text-xs'}`}>
           <p>Jan {match.match_date}, 2026</p>
           <p>{match.match_time}</p>
         </div>
       </div>
       {match.venue && (
-        <p className="text-xs text-muted-foreground mt-1">📍 {match.venue}</p>
+        <p className={`text-muted-foreground mt-1 ${isCentered ? 'text-sm' : 'text-xs'}`}>📍 {match.venue}</p>
       )}
       {isRunning && match.live_stream_url && (
-        <div className="flex items-center gap-1 mt-2 text-destructive text-xs font-medium">
-          <Video className="w-3 h-3" />
+        <div className={`flex items-center gap-1 mt-2 text-destructive font-medium ${isCentered ? 'text-sm' : 'text-xs'}`}>
+          <Video className={isCentered ? 'w-4 h-4' : 'w-3 h-3'} />
           Watch Live
         </div>
       )}
