@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, Send, User, ArrowDown, Smile } from 'lucide-react';
+import { MessageCircle, Send, User, ArrowDown, Smile, Reply, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ interface ChatMessage {
   message: string;
   username: string;
   created_at: string;
+  reply_to?: string | null;
 }
 
 interface ChatReaction {
@@ -36,8 +37,9 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [userIdentifier, setUserIdentifier] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Generate or retrieve user identifier for reactions
   useEffect(() => {
@@ -160,6 +162,15 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
     }
   };
 
+  const handleReply = (message: ChatMessage) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+  };
+
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
@@ -176,9 +187,11 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
       sport_id: sportId,
       message: censoredMessage,
       username: censoredUsername,
+      reply_to: replyingTo?.id || null,
     });
 
     setNewMessage('');
+    setReplyingTo(null);
     scrollToBottom();
   };
 
@@ -226,6 +239,11 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
     return counts;
   };
 
+  const getReplyMessage = (replyToId: string | null | undefined) => {
+    if (!replyToId) return null;
+    return messages.find(m => m.id === replyToId);
+  };
+
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -261,44 +279,66 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
             <div className="space-y-3">
               {messages.map((msg) => {
                 const reactionCounts = getReactionCounts(msg.id);
+                const replyMessage = getReplyMessage(msg.reply_to);
                 return (
                   <div key={msg.id} className="flex gap-2 group">
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                       <User className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
+                      <div className="flex items-baseline gap-2 flex-wrap">
                         <span className="font-medium text-sm">{msg.username}</span>
                         <span className="text-xs text-muted-foreground">{formatTime(msg.created_at)}</span>
                         
-                        {/* Reaction button */}
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Smile className="w-3 h-3" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-2" side="top">
-                            <div className="flex gap-1">
-                              {REACTION_EMOJIS.map((emoji) => (
-                                <Button
-                                  key={emoji}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-lg hover:scale-125 transition-transform"
-                                  onClick={() => toggleReaction(msg.id, emoji)}
-                                >
-                                  {emoji}
-                                </Button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                        {/* Action buttons */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5"
+                            onClick={() => handleReply(msg)}
+                            title="Reply"
+                          >
+                            <Reply className="w-3 h-3" />
+                          </Button>
+                          
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-5 w-5"
+                              >
+                                <Smile className="w-3 h-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-2" side="top">
+                              <div className="flex gap-1">
+                                {REACTION_EMOJIS.map((emoji) => (
+                                  <Button
+                                    key={emoji}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-lg hover:scale-125 transition-transform"
+                                    onClick={() => toggleReaction(msg.id, emoji)}
+                                  >
+                                    {emoji}
+                                  </Button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       </div>
+                      
+                      {/* Reply quote */}
+                      {replyMessage && (
+                        <div className="bg-secondary/50 border-l-2 border-primary/50 px-2 py-1 my-1 rounded-r text-xs">
+                          <span className="font-medium text-primary">{replyMessage.username}</span>
+                          <p className="text-muted-foreground truncate">{replyMessage.message}</p>
+                        </div>
+                      )}
+                      
                       <p className="text-sm text-foreground/90 break-words">{msg.message}</p>
                       
                       {/* Display reactions */}
@@ -341,6 +381,21 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
         )}
       </div>
 
+      {/* Reply indicator */}
+      {replyingTo && (
+        <div className="border-t border-border px-3 py-2 bg-secondary/50 flex items-center gap-2">
+          <Reply className="w-4 h-4 text-primary" />
+          <div className="flex-1 min-w-0">
+            <span className="text-xs text-muted-foreground">Replying to </span>
+            <span className="text-xs font-medium text-primary">{replyingTo.username}</span>
+            <p className="text-xs text-muted-foreground truncate">{replyingTo.message}</p>
+          </div>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelReply}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t border-border p-3 bg-secondary/30">
         <div className="flex gap-2 mb-2">
@@ -351,7 +406,8 @@ export function LiveChat({ sportId, sportName }: LiveChatProps) {
             className="w-32 text-sm"
           />
           <Input
-            placeholder="Type your message..."
+            ref={inputRef}
+            placeholder={replyingTo ? `Reply to ${replyingTo.username}...` : "Type your message..."}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}

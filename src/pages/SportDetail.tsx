@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Video, Search, X } from 'lucide-react';
 import { useSport, useGroups, useTeams, useMatchesBySport, type Sport } from '@/hooks/useSportsData';
 import { LiveStream } from '@/components/LiveStream';
 import { LiveChat } from '@/components/LiveChat';
+import { MatchVoting } from '@/components/MatchVoting';
 import { MatchStatusBadge, MatchTypeBadge } from '@/components/MatchStatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -136,6 +137,17 @@ export default function SportDetail() {
                 {/* Live Chat (Team Sports Only) */}
                 {hasChat && (
                   <LiveChat sportId={sport.id} sportName={sport.name} />
+                )}
+
+                {/* Match Voting (for running matches with teams) */}
+                {runningMatch && runningMatch.team_a && runningMatch.team_b && (
+                  <MatchVoting 
+                    matchId={runningMatch.id}
+                    teamA={runningMatch.team_a}
+                    teamB={runningMatch.team_b}
+                    matchName={runningMatch.match_name}
+                    isLive={true}
+                  />
                 )}
 
                 {/* Points Table (Team Sports Only) */}
