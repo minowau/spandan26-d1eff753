@@ -1,30 +1,35 @@
 import { useState } from 'react';
-import { Calendar, Search, X } from 'lucide-react';
-import { useMatchesByDate } from '@/hooks/useSportsData';
+import { Calendar, Search, X, Filter } from 'lucide-react';
+import { useMatchesByDate, useSports } from '@/hooks/useSportsData';
 import { DateFilter } from '@/components/DateFilter';
 import { ScheduleCard } from '@/components/ScheduleCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const festDates = ['22', '23', '24', '25'];
 
 export default function Schedule() {
   const [selectedDate, setSelectedDate] = useState(festDates[0]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterSportId, setFilterSportId] = useState<string>('all');
   const { data: matches, isLoading } = useMatchesByDate(selectedDate);
+  const { data: sports } = useSports();
 
-  // Filter matches by search query
+  // Filter matches by search query and sport
   const filterBySearch = (match: any) => {
-    if (!searchQuery.trim()) return true;
+    if (!searchQuery.trim() && filterSportId === 'all') return true;
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSport = filterSportId === 'all' || match.sport_id === filterSportId;
+    const matchesQuery = !searchQuery.trim() || (
       match.match_name?.toLowerCase().includes(query) ||
       match.team_a?.toLowerCase().includes(query) ||
       match.team_b?.toLowerCase().includes(query) ||
       match.sports?.name?.toLowerCase().includes(query) ||
       match.venue?.toLowerCase().includes(query)
     );
+    return matchesSport && matchesQuery;
   };
 
   // Group matches by category and sort by time
@@ -64,27 +69,43 @@ export default function Schedule() {
           )}
         </div>
 
-        {/* Search & Date Filter */}
+        {/* Search, Filter & Date */}
         <div className="mb-10 space-y-4">
-          {/* Search Input */}
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search matches, teams, sports, venues..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
+          {/* Search & Sport Filter */}
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search matches, teams, venues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <Select value={filterSportId} onValueChange={setFilterSportId}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="All Sports" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sports</SelectItem>
+                {sports?.map((sport) => (
+                  <SelectItem key={sport.id} value={sport.id}>
+                    {sport.icon} {sport.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DateFilter selectedDate={selectedDate} onDateChange={setSelectedDate} />
         </div>
