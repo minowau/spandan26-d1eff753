@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Video, Search, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Video, Search, X, ChevronDown, ChevronUp, Vote } from 'lucide-react';
 import { useSport, useGroups, useTeams, useMatchesBySport, type Sport } from '@/hooks/useSportsData';
+import { supabase } from '@/integrations/supabase/client';
 import { LiveStream } from '@/components/LiveStream';
 import { LiveChat } from '@/components/LiveChat';
 import { MatchVoting } from '@/components/MatchVoting';
@@ -307,7 +308,11 @@ function MatchSchedulePanel({
 }
 
 function ScheduleItem({ match, isCentered = false }: { match: any; isCentered?: boolean }) {
+  const [showVoting, setShowVoting] = useState(false);
   const isRunning = match.status === 'running';
+  const isUpcoming = match.status === 'upcoming';
+  const hasTeams = match.team_a && match.team_b;
+  const canVote = (isUpcoming || isRunning) && hasTeams;
 
   return (
     <div className={`rounded-lg ${isRunning ? 'bg-destructive/10 ring-1 ring-destructive' : 'bg-secondary/50'} ${isCentered ? 'p-4' : 'p-3'}`}>
@@ -318,7 +323,7 @@ function ScheduleItem({ match, isCentered = false }: { match: any; isCentered?: 
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className={`font-medium ${isCentered ? 'text-base' : 'text-sm'}`}>
-            {match.team_a && match.team_b ? `${match.team_a} vs ${match.team_b}` : match.match_name}
+            {hasTeams ? `${match.team_a} vs ${match.team_b}` : match.match_name}
           </p>
         </div>
         <div className={`text-right text-muted-foreground ${isCentered ? 'text-sm' : 'text-xs'}`}>
@@ -333,6 +338,187 @@ function ScheduleItem({ match, isCentered = false }: { match: any; isCentered?: 
         <div className={`flex items-center gap-1 mt-2 text-destructive font-medium ${isCentered ? 'text-sm' : 'text-xs'}`}>
           <Video className={isCentered ? 'w-4 h-4' : 'w-3 h-3'} />
           Watch Live
+        </div>
+      )}
+      
+      {/* Vote button for upcoming/running matches with teams */}
+      {canVote && (
+        <div className="mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`w-full justify-between h-7 text-xs ${showVoting ? 'bg-accent/20' : ''}`}
+            onClick={() => setShowVoting(!showVoting)}
+          >
+            <span className="flex items-center gap-1">
+              <Vote className="w-3 h-3" />
+              Predict Winner
+            </span>
+            {showVoting ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </Button>
+          
+          {showVoting && (
+            <div className="mt-2">
+              <InlineMatchVoting
+                matchId={match.id}
+                teamA={match.team_a}
+                teamB={match.team_b}
+                isLive={isRunning}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InlineMatchVoting({ matchId, teamA, teamB, isLive }: { matchId: string; teamA: string; teamB: string; isLive?: boolean }) {
+  const [votes, setVotes] = useState<any[]>([]);
+  const [userVote, setUserVote] = useState<string | null>(null);
+  const [userIdentifier, setUserIdentifier] = useState('');
+  const [isVoting, setIsVoting] = useState(false);
+
+  useEffect(() => {
+    let identifier = localStorage.getItem('spandan_user_id');
+    if (!identifier) {
+      identifier = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('spandan_user_id', identifier);
+    }
+    setUserIdentifier(identifier);
+  }, []);
+
+  useEffect(() => {
+    const fetchVotes = async () => {
+      const { data } = await supabase
+        .from('match_votes')
+        .select('*')
+        .eq('match_id', matchId);
+      
+      if (data) {
+        setVotes(data);
+        const existingVote = data.find((v: any) => v.user_identifier === userIdentifier);
+        if (existingVote) {
+          setUserVote(existingVote.team_voted);
+        }
+      }
+    };
+
+    if (userIdentifier) {
+      fetchVotes();
+    }
+
+    const channel = supabase
+      .channel(`inline-votes-${matchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'match_votes',
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setVotes(prev => [...prev, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+            setVotes(prev => prev.map(v => v.id === payload.new.id ? payload.new : v));
+          } else if (payload.eventType === 'DELETE') {
+            setVotes(prev => prev.filter(v => v.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [matchId, userIdentifier]);
+
+  const handleVote = async (team: string) => {
+    if (!userIdentifier || isVoting) return;
+    
+    setIsVoting(true);
+    
+    try {
+      const existingVote = votes.find((v: any) => v.user_identifier === userIdentifier);
+      
+      if (existingVote) {
+        if (existingVote.team_voted === team) {
+          setIsVoting(false);
+          return;
+        }
+        await supabase
+          .from('match_votes')
+          .update({ team_voted: team })
+          .eq('id', existingVote.id);
+      } else {
+        await supabase.from('match_votes').insert({
+          match_id: matchId,
+          team_voted: team,
+          user_identifier: userIdentifier,
+        });
+      }
+      
+      setUserVote(team);
+    } catch (error) {
+      console.error('Error voting:', error);
+    }
+    
+    setIsVoting(false);
+  };
+
+  const teamAVotes = votes.filter((v: any) => v.team_voted === teamA).length;
+  const teamBVotes = votes.filter((v: any) => v.team_voted === teamB).length;
+  const totalVotes = teamAVotes + teamBVotes;
+  const teamAPercentage = totalVotes > 0 ? Math.round((teamAVotes / totalVotes) * 100) : 50;
+  const teamBPercentage = totalVotes > 0 ? Math.round((teamBVotes / totalVotes) * 100) : 50;
+
+  return (
+    <div className="space-y-2 bg-background/50 rounded-lg p-2">
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant={userVote === teamA ? 'default' : 'outline'}
+          size="sm"
+          className={`h-8 text-xs ${userVote === teamA ? 'ring-1 ring-primary' : ''}`}
+          onClick={() => handleVote(teamA)}
+          disabled={isVoting}
+        >
+          {teamA}
+          {userVote === teamA && <span className="ml-1">✓</span>}
+        </Button>
+        
+        <Button
+          variant={userVote === teamB ? 'default' : 'outline'}
+          size="sm"
+          className={`h-8 text-xs ${userVote === teamB ? 'ring-1 ring-primary' : ''}`}
+          onClick={() => handleVote(teamB)}
+          disabled={isVoting}
+        >
+          {teamB}
+          {userVote === teamB && <span className="ml-1">✓</span>}
+        </Button>
+      </div>
+
+      {totalVotes > 0 && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{teamA}: {teamAPercentage}%</span>
+            <span>{teamB}: {teamBPercentage}%</span>
+          </div>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden flex">
+            <div 
+              className="bg-primary transition-all duration-300" 
+              style={{ width: `${teamAPercentage}%` }} 
+            />
+            <div 
+              className="bg-accent transition-all duration-300" 
+              style={{ width: `${teamBPercentage}%` }} 
+            />
+          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            {totalVotes} prediction{totalVotes !== 1 ? 's' : ''}
+          </p>
         </div>
       )}
     </div>
