@@ -11,7 +11,7 @@ export function Footer() {
             <p className="mt-1">Intra-College Sports Championship</p>
           </div>
           <div className="text-xs text-primary-foreground/60">
-            © 2025 Sports Committee
+            © 2026 Sports Committee
           </div>
         </div>
       </div>
